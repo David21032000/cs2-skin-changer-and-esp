@@ -1,0 +1,212 @@
+# CS2 Skin Changer Configuration
+# Weapon ID = section header
+# paint_kit = skin ID number
+# wear = 0.001 (factory new) to 1.0 (battle-scarred)
+# seed = pattern seed (0-1000)
+# stattrak = kill count (-1 to disable stattrak)
+# enabled = true/false
+
+[Settings]
+knife_id = 500
+update_interval_ms = 100
+
+# === Rifle Skins ===
+
+[7]   # AK-47
+paint_kit = 524
+wear = 0.001
+seed = 0
+stattrak = -1
+enabled = true
+
+[8]   # AUG
+paint_kit = 455
+wear = 0.001
+seed = 0
+stattrak = -1
+enabled = true
+
+[9]   # AWP
+paint_kit = 344
+wear = 0.001
+seed = 0
+stattrak = -1
+enabled = true
+
+[10]  # FAMAS
+paint_kit = 356
+wear = 0.001
+seed = 0
+stattrak = -1
+enabled = true
+
+[13]  # Galil AR
+paint_kit = 448
+wear = 0.001
+seed = 0
+stattrak = -1
+enabled = true
+
+[16]  # M4A4
+paint_kit = 309
+wear = 0.001
+seed = 0
+stattrak = -1
+enabled = true
+
+[17]  # M4A1-S
+paint_kit = 540
+wear = 0.001
+seed = 0
+stattrak = -1
+enabled = true
+
+[27]  # SG 553
+paint_kit = 436
+wear = 0.001
+seed = 0
+stattrak = -1
+enabled = true
+
+[39]  # SSG 08
+paint_kit = 402
+wear = 0.001
+seed = 0
+stattrak = -1
+enabled = true
+
+# === Pistol Skins ===
+
+[1]   # Desert Eagle
+paint_kit = 526
+wear = 0.001
+seed = 0
+stattrak = -1
+enabled = true
+
+[3]   # Five-SeveN
+paint_kit = 529
+wear = 0.001
+seed = 0
+stattrak = -1
+enabled = true
+
+[4]   # Glock-18
+paint_kit = 525
+wear = 0.001
+seed = 0
+stattrak = -1
+enabled = true
+
+[30]  # USP-S
+paint_kit = 519
+wear = 0.001
+seed = 0
+stattrak = -1
+enabled = true
+
+[32]  # P2000
+paint_kit = 376
+wear = 0.001
+seed = 0
+stattrak = -1
+enabled = true
+
+[36]  # Dual Berettas
+paint_kit = 481
+wear = 0.001
+seed = 0
+stattrak = -1
+enabled = true
+
+# === SMG / Heavy Skins ===
+
+[23]  # MP7
+paint_kit = 491
+wear = 0.001
+seed = 0
+stattrak = -1
+enabled = true
+
+[24]  # MP9
+paint_kit = 508
+wear = 0.001
+seed = 0
+stattrak = -1
+enabled = true
+
+[33]  # UMP-45
+paint_kit = 491
+wear = 0.001
+seed = 0
+stattrak = -1
+enabled = true
+
+[34]  # P90
+paint_kit = 467
+wear = 0.001
+seed = 0
+stattrak = -1
+enabled = true
+
+# === Knife ===
+
+[500] # Bayonet (default knife)
+paint_kit = 418
+wear = 0.001
+seed = 0
+stattrak = -1
+enabled = true
+
+# === Skin ID Reference (copy-paste into weapon sections above) ===
+# Rifles:
+# AWP | Dragon Lore       = 344
+# AWP | Asiimov           = 279
+# AWP | Gungnir           = 639
+# AK-47 | Redline         = 282
+# AK-47 | Asiimov         = 524
+# AK-47 | Inheritance     = 998
+# AK-47 | Vulcan          = 153
+# AK-47 | Fire Serpent    = 107
+# M4A4 | Howl             = 309
+# M4A4 | Emperor          = 509
+# M4A1-S | Printstream    = 540
+# M4A1-S | Mecha Industries = 514
+# M4A1-S | Golden Coil    = 309 (now M4A4 Howl)
+# M4A1-S | Vaporwave      = 645
+# SG 553 | Integrale      = 436
+# AUG | Syd Mead          = 455
+# FAMAS | Waters of Nephthys = 356
+# Galil AR | Chromatic Aberration = 448
+# SSG 08 | Death Strike   = 402
+# SSG 08 | Blood in the Water = 124
+
+# Pistols:
+# Desert Eagle | Blaze     = 526
+# Desert Eagle | Hand Cannon = 369
+# Desert Eagle | Code Red  = 464
+# Desert Eagle | Ocean Drive = 650
+# Glock-18 | Gamma Doppler = 525
+# Glock-18 | Fade          = 38
+# USP-S | Kill Confirmed  = 244
+# USP-S | Printstream     = 519
+# Five-SeveN | Fairy Tale = 529
+# P2000 | Imperiale       = 376
+# Dual Berettas | Melondrama = 481
+
+# SMGs:
+# MP9 | Food Chain        = 508
+# MP7 | Bloodsport        = 491
+# UMP-45 | Fade           = 491 (same as MP7 Bloodsport, verify)
+# P90 | Death by Kitty    = 467
+
+# Knives:
+# Bayonet | Doppler       = 418
+# Bayonet | Fade          = 39
+# Bayonet | Marble Fade   = 415
+# Karambit | Doppler      = 418 (same paint id for doppler across knives)
+# Karambit | Fade         = 39
+# Karambit | Tiger Tooth  = 417
+# M9 Bayonet | Doppler    = 418
+# Butterfly | Fade        = 39
+# Butterfly | Doppler     = 418
