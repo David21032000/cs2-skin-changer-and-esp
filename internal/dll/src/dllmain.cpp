@@ -9,14 +9,12 @@ static void Log(const char* msg) {
     if (f) { fprintf(f, "%s\n", msg); fclose(f); }
 }
 
-DWORD WINAPI CheatThread(LPVOID lpParam) {
+static void RunCheat() {
     Log("step 1: AllocConsole...");
     AllocConsole();
     freopen_s((FILE**)stdin, "CONIN$", "r", stdin);
     freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
     Log("step 2: console done");
-
-    Sleep(100);
 
     Log("step 3: InitEverything...");
     InitEverything();
@@ -25,7 +23,7 @@ DWORD WINAPI CheatThread(LPVOID lpParam) {
     Log("step 5: Hooks::initialize (D3D11)...");
     if (!Hooks::initialize()) {
         Log("step 5: D3D11 FAILED");
-        return 1;
+        return;
     }
     Log("step 6: cheat running");
 
@@ -41,14 +39,12 @@ DWORD WINAPI CheatThread(LPVOID lpParam) {
     Hooks::ShutdownGameHooks();
     Hooks::shutdown();
     FreeConsole();
-    return 0;
 }
 
 BOOL WINAPI DllMain(HINSTANCE hModule, DWORD dwReason, LPVOID lpReserved) {
     if (dwReason == DLL_PROCESS_ATTACH) {
         DisableThreadLibraryCalls(hModule);
-        HANDLE hThread = CreateThread(nullptr, 0, CheatThread, hModule, 0, nullptr);
-        if (hThread) CloseHandle(hThread);
+        RunCheat();
     }
     return TRUE;
 }
