@@ -22,16 +22,17 @@ namespace Cheat {
 }
 
 DWORD WINAPI CheatThread(LPVOID lpParam) {
-    while (!GetConsoleWindow()) Sleep(100);
+    Cheat::initialize();
+
+    Sleep(100);
 
     if (MH_Initialize() != MH_OK) {
         Cheat::shutdown();
         return 1;
     }
 
-    Cheat::initialize();
-
     if (!Hooks::initialize()) {
+        MH_Uninitialize();
         Cheat::shutdown();
         return 1;
     }
@@ -45,6 +46,8 @@ DWORD WINAPI CheatThread(LPVOID lpParam) {
         Sleep(1);
     }
 
+    MH_DisableHook(MH_ALL_HOOKS);
+    MH_Uninitialize();
     Hooks::shutdown();
     Cheat::shutdown();
     return 0;

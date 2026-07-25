@@ -14,12 +14,9 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 
 typedef HRESULT(__stdcall* Present_t)(IDXGISwapChain*, UINT, UINT);
 typedef HRESULT(__stdcall* ResizeBuffers_t)(IDXGISwapChain*, UINT, UINT, UINT, DXGI_FORMAT, UINT);
-typedef void(__stdcall* CreateMove_t)(int, float, bool);
-
 namespace {
     Present_t originalPresent = nullptr;
     ResizeBuffers_t originalResizeBuffers = nullptr;
-    CreateMove_t originalCreateMove = nullptr;
 
     IDXGISwapChain* g_pSwapChain = nullptr;
     ID3D11Device* g_pDevice = nullptr;
@@ -75,43 +72,6 @@ HRESULT __stdcall ResizeBuffers_hook(IDXGISwapChain* pSwapChain, UINT BufferCoun
     }
     return originalResizeBuffers(pSwapChain, BufferCount, Width, Height, NewFormat, SwapChainFlags);
 }
-void __stdcall CreateMove_hook(int sequence_number, float input_sample_frametime, bool active) {
-    originalCreateMove(sequence_number, input_sample_frametime, active);
-
-    void* cmd = nullptr;
-    uintptr_t* pCmd = nullptr;
-
-    if (!cmd) return;
-
-    {
-    }
-}
-
-void* FindPattern(const char* moduleName, const char* pattern, const char* mask) {
-    HMODULE hModule = GetModuleHandleA(moduleName);
-    if (!hModule) return nullptr;
-
-    PIMAGE_DOS_HEADER dosHeader = (PIMAGE_DOS_HEADER)hModule;
-    PIMAGE_NT_HEADERS ntHeaders = (PIMAGE_NT_HEADERS)((BYTE*)hModule + dosHeader->e_lfanew);
-    DWORD size = ntHeaders->OptionalHeader.SizeOfImage;
-
-    BYTE* base = (BYTE*)hModule;
-    DWORD patternLen = strlen(mask);
-
-    for (DWORD i = 0; i < size - patternLen; i++) {
-        bool found = true;
-        for (DWORD j = 0; j < patternLen; j++) {
-            if (mask[j] == 'x' && base[i + j] != (BYTE)pattern[j]) {
-                found = false;
-                break;
-            }
-        }
-        if (found)
-            return &base[i];
-    }
-    return nullptr;
-}
-
 bool Hooks::initialize() {
     DXGI_SWAP_CHAIN_DESC scd = {};
     scd.BufferCount = 1;
@@ -127,34 +87,26 @@ bool Hooks::initialize() {
     ID3D11Device* tempDevice = nullptr;
     ID3D11DeviceContext* tempContext = nullptr;
 
-    D3D11CreateDeviceAndSwapChain(
+    HRESULT hr = D3D11CreateDeviceAndSwapChain(
         nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, 0,
         nullptr, 0, D3D11_SDK_VERSION, &scd,
         &tempSwapChain, &tempDevice, nullptr, &tempContext
     );
+    if (FAILED(hr) || !tempSwapChain || !tempDevice) return false;
 
     void** vtable = *(void***)tempSwapChain;
-
     void* presentTarget = vtable[8];
     void* resizeTarget = vtable[13];
+
+    if (MH_CreateHook(presentTarget, (LPVOID)&Present_hook, (void**)&originalPresent) != MH_OK)
+        return false;
+
+    if (MH_CreateHook(resizeTarget, (LPVOID)&ResizeBuffers_hook, (void**)&originalResizeBuffers) != MH_OK)
+        return false;
 
     tempSwapChain->Release();
     tempDevice->Release();
     tempContext->Release();
-
-    if (MH_CreateHook(presentTarget, reinterpret_cast<LPVOID>(&Present_hook), (void**)&originalPresent) != MH_OK)
-        return false;
-
-    if (MH_CreateHook(resizeTarget, reinterpret_cast<LPVOID>(&ResizeBuffers_hook), (void**)&originalResizeBuffers) != MH_OK)
-        return false;
-
-    void* createMoveTarget = FindPattern("client.dll",
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
-        "xxxxxxxxxxxxxxxx");
-    if (createMoveTarget) {
-        if (MH_CreateHook(createMoveTarget, reinterpret_cast<LPVOID>(&CreateMove_hook), (void**)&originalCreateMove) != MH_OK)
-            return false;
-    }
 
     if (MH_EnableHook(MH_ALL_HOOKS) != MH_OK)
         return false;
