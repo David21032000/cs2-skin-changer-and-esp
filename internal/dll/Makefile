@@ -1,7 +1,8 @@
 CXX = x86_64-w64-mingw32-g++
-CXXFLAGS = -std=c++20 -O2 -s -fvisibility=hidden -shared -static-libgcc -static-libstdc++ \
+CXXFLAGS = -std=c++20 -O2 -s -fvisibility=hidden -shared \
            -m64 -Wall -Wno-unused-variable -Wno-unused-parameter -Wno-comment -Isrc
-LDFLAGS = -ld3d11 -ldxgi -ld3dcompiler -lwinmm -lws2_32 -limm32 -lgdi32 -ldwmapi -lwinhttp
+LDFLAGS = -static-libgcc -static-libstdc++ -Wl,-Bstatic -lwinpthread -Wl,-Bdynamic \
+          -ld3d11 -ldxgi -ld3dcompiler -lwinmm -lws2_32 -limm32 -lgdi32 -ldwmapi -lwinhttp
 
 SRCDIR = src
 OBJDIR = obj

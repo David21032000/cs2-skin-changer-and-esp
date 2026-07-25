@@ -7,3 +7,5 @@ node_modules/
 obj/
 *.o
 *.log
+tsconfig.tsbuildinfo
+next-env.d.ts
