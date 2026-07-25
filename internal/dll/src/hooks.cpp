@@ -6,6 +6,7 @@
 #include "imgui/imgui_impl_win32.h"
 #include "imgui/imgui_impl_dx11.h"
 #include "hooks.h"
+#include "hooks_game.h"
 #include "menu.h"
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -32,8 +33,12 @@ static void Log(const char* msg) {
 }
 
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-    if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
+    if (g_initialized && ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
         return true;
+    if (msg == WM_KEYDOWN && wParam == VK_INSERT) {
+        g_MenuOpen = !g_MenuOpen;
+        return true;
+    }
     return CallWindowProcA(g_originalWndProc, hWnd, msg, wParam, lParam);
 }
 
@@ -67,6 +72,9 @@ HRESULT __stdcall Present_hook(IDXGISwapChain* pSwapChain, UINT SyncInterval, UI
     ImGui_ImplDX11_NewFrame();
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
+
+    // Run game loop (visuals, thirdperson, etc.)
+    Hooks::GameLoop();
 
     Menu::Render();
     Menu::RenderWatermark();

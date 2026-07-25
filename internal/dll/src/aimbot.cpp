@@ -1,4 +1,5 @@
 #include "aimbot.h"
+#include "menu.h"
 #include <algorithm>
 #include <vector>
 #include <cstdlib>
@@ -14,11 +15,6 @@ static uintptr_t GetEntityFromList(int index) {
     uintptr_t entry = Mem::Read<uintptr_t>(list + index * 0x10);
     if (!entry) return 0;
     return Mem::Read<uintptr_t>(entry + 0x10 * (index & 0x1FF));
-}
-
-static int GetWeaponIndex(uintptr_t weapon) {
-    if (!weapon) return -1;
-    return Mem::Read<int>(weapon + Offsets::NetVar::m_iItemDefinitionIndex);
 }
 
 static WeaponInfo GetWeaponInfo(uintptr_t weapon) {
@@ -115,9 +111,8 @@ Vec3 Aimbot::GetHitboxPos(uintptr_t entity, int hitbox) {
     Vec3 bbMin = *reinterpret_cast<Vec3*>(hb + 0x0);
     Vec3 bbMax = *reinterpret_cast<Vec3*>(hb + 0xC);
     Vec3 center = (bbMin + bbMax) * 0.5f;
-    Vec3 bonePos = *reinterpret_cast<Vec3*>(boneArray + boneIndex * 0x20);
-    Vec3 out;
     float* mat = reinterpret_cast<float*>(boneArray + boneIndex * 0x20);
+    Vec3 out;
     out.x = center.x * mat[0] + center.y * mat[1] + center.z * mat[2] + mat[3];
     out.y = center.x * mat[4] + center.y * mat[5] + center.z * mat[6] + mat[7];
     out.z = center.x * mat[8] + center.y * mat[9] + center.z * mat[10] + mat[11];
@@ -173,8 +168,8 @@ float Aimbot::Hitchance(uintptr_t entity, const Vec3& pos, const Vec3& angles, W
     float spreadRad = DEG2RAD(totalSpread);
     Vec3 dirToTarget = (pos - localEye).Normalized();
     float dist = localEye.DistTo(pos);
-    float maxAngle = std::asin(std::min(spreadRad, 0.99f));
     float targetAngle = std::acos(std::clamp(forward.Dot(dirToTarget), -1.f, 1.f));
+    float maxAngle = std::asin(std::min(spreadRad, 0.99f));
     if (targetAngle > maxAngle) return 0.f;
     Vec3 right = forward.Cross(Vec3(0, 0, 1)).Normalized();
     Vec3 up = right.Cross(forward).Normalized();
@@ -192,7 +187,6 @@ float Aimbot::Hitchance(uintptr_t entity, const Vec3& pos, const Vec3& angles, W
         spreadVec.z = std::cos(phi) * spreadRad;
         Vec3 shotDir = forward + right * spreadVec.x + up * spreadVec.y;
         Vec3 shotDirNorm = shotDir.Normalized();
-        float shotFrac = dist / (shotDirNorm.Length() * dist);
         Vec3 hitPos = localEye + shotDirNorm * (dist / std::max(shotDirNorm.Dot(dirToTarget), 0.1f));
         Vec3 targetCenter = GetHitboxPos(entity, 6);
         if (hitPos.DistTo(targetCenter) < 15.f) hits++;
@@ -228,8 +222,7 @@ uintptr_t Aimbot::GetBestTarget(WeaponInfo* wpn, CUserCmd* cmd) {
 }
 
 void Aimbot::Run(CUserCmd* cmd) {
-    static AimbotConfig cfg;
-    if (!cfg.enabled || !cmd) return;
+    if (!g_RageConfig.enabled || !cmd) return;
     uintptr_t local = GetLocalPlayer();
     if (!local) return;
     uintptr_t weapon = GetActiveWeapon(local);
@@ -239,16 +232,16 @@ void Aimbot::Run(CUserCmd* cmd) {
     if (!target) return;
     Vec3 localPos = Mem::Read<Vec3>(local + Offsets::NetVar::m_vecAbsOrigin);
     Vec3 localEye = localPos + Mem::Read<Vec3>(local + Offsets::NetVar::m_vecViewOffset);
-    int priority = GetHitboxPriority(cfg.hitboxPriority);
+    int priority = GetHitboxPriority(g_RageConfig.hitboxPriority);
     Vec3 aimPos = GetHitboxPos(target, priority);
-    if (cfg.multipointScale > 0.f) {
-        auto points = GetMultipoints(target, priority, cfg.multipointScale);
+    if (g_RageConfig.multipoint && g_RageConfig.multipointScale > 0.f) {
+        auto points = GetMultipoints(target, priority, g_RageConfig.multipointScale);
         float bestDmg = 0.f;
         Vec3 bestPos = aimPos;
         for (auto& pt : points) {
             if (!IsVisible(target, localEye, pt)) continue;
             int dmg = EstimateDamage(target, pt, &wpn);
-            if (dmg > bestDmg && dmg >= cfg.minDamage) {
+            if (dmg > bestDmg && dmg >= g_RageConfig.minDamage) {
                 bestDmg = static_cast<float>(dmg);
                 bestPos = pt;
             }
@@ -257,14 +250,14 @@ void Aimbot::Run(CUserCmd* cmd) {
     }
     Vec3 targetAngles = CalcAngle(localEye, aimPos);
     float hitchance = Hitchance(target, aimPos, targetAngles, &wpn, cmd);
-    if (hitchance < cfg.hitchance) return;
+    if (hitchance < g_RageConfig.hitchance) return;
     Vec3 current = cmd->viewangles;
     Vec3 delta = targetAngles - current;
     delta.Clamp();
-    if (cfg.silent) {
+    if (g_RageConfig.silent) {
         cmd->viewangles = targetAngles;
     }
-    if (cfg.autoShoot && hitchance >= cfg.hitchance) {
+    if (g_RageConfig.autoShoot && hitchance >= g_RageConfig.hitchance) {
         cmd->buttons |= 1;
     }
 }

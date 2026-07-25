@@ -6,6 +6,14 @@
 #include <cstring>
 #include <Windows.h>
 #include <psapi.h>
+
+// Fix windows macro conflicts with interface method names
+#ifdef PlaySound
+#undef PlaySound
+#endif
+#ifdef CreateFont
+#undef CreateFont
+#endif
 #pragma comment(lib, "psapi.lib")
 #include "offsets.h"
 #include "math.h"

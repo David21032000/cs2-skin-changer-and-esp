@@ -1,4 +1,5 @@
 #include "visuals.h"
+#include "menu.h"
 #include "interfaces.h"
 #include "math.h"
 #include "netvars.h"
@@ -22,46 +23,73 @@ void Visuals::Render() {
     auto entityList = Interfaces::entityList;
     if (!entityList) return;
     auto engine = Interfaces::engine;
-    if (!engine) return;
-    int localIdx = *(int*)((uintptr_t)engine + Offsets::dwLocalPlayerPawn);
-    uintptr_t lp = *(uintptr_t*)((uintptr_t)entityList + 8 * (localIdx & 0x7FFF));
-    if (!lp) return;
-    int localTeam = *(int*)(lp + Offsets::NetVar::m_iTeamNum);
+    if (!engine || !engine->IsInGame()) return;
+
+    uintptr_t local = Mem::Read<uintptr_t>(Offsets::dwLocalPlayerPawn);
+    if (!local) return;
+    int localTeam = Mem::Read<int>(local + Offsets::NetVar::m_iTeamNum);
+
     for (int i = 1; i <= 64; i++) {
-        uintptr_t entry = *(uintptr_t*)((uintptr_t)entityList + 8 * (i & 0x7FFF) + 0x10);
+        uintptr_t list = Mem::Read<uintptr_t>(Offsets::dwEntityList);
+        if (!list) continue;
+        uintptr_t entry = Mem::Read<uintptr_t>(list + i * 0x10);
         if (!entry) continue;
-        uintptr_t player = *(uintptr_t*)(entry + 0x78 * (i >> 0x1C) + 0x10);
+        uintptr_t player = Mem::Read<uintptr_t>(entry + 0x10 * (i & 0x1FF));
+
         if (!player) continue;
-        if (*(int*)(player + Offsets::NetVar::m_lifeState)) continue;
-        int hp = *(int*)(player + Offsets::NetVar::m_iHealth);
+        if (Mem::Read<int>(player + Offsets::NetVar::m_lifeState)) continue;
+        int hp = Mem::Read<int>(player + Offsets::NetVar::m_iHealth);
         if (hp < 1 || hp > 100) continue;
-        int team = *(int*)(player + Offsets::NetVar::m_iTeamNum);
-        if (g_VisualsConfig.enemiesOnly && team == localTeam) continue;
-        Vec3 pos = *(Vec3*)(player + Offsets::NetVar::m_vecAbsOrigin);
+        int team = Mem::Read<int>(player + Offsets::NetVar::m_iTeamNum);
+        if (team == localTeam) continue;
+
+        Vec3 pos = Mem::Read<Vec3>(player + Offsets::NetVar::m_vecAbsOrigin);
         Vec3 head = pos; head.z += 72.f;
         Vec3 sp, sh;
-        auto vm = *(ViewMatrix*)((uintptr_t)Offsets::client + Offsets::dwViewMatrix);
+        ViewMatrix vm = Mem::Read<ViewMatrix>(Offsets::dwViewMatrix);
         if (!WorldToScreen(pos, sp, vm, w, h)) continue;
         if (!WorldToScreen(head, sh, vm, w, h)) continue;
+
         float boxH = sp.y - sh.y;
         float boxW = boxH * 0.6f;
         if (boxH < 1) continue;
+
         ImColor col = (team == localTeam) ? ImColor(0,255,0) : ImColor(255,0,0);
+
         if (g_VisualsConfig.box)
             draw->AddRect(ImVec2(sp.x-boxW,sh.y), ImVec2(sp.x+boxW,sp.y), col);
-        if (g_VisualsConfig.health) {
+
+        if (g_VisualsConfig.healthBar) {
             float hRatio = hp / 100.f;
             ImColor hc = ImColor(1.f-hRatio, hRatio, 0.f);
             draw->AddRectFilled(ImVec2(sp.x-boxW-6,sh.y), ImVec2(sp.x-boxW-3,sp.y), ImColor(0,0,0,200));
             float bh = boxH * hRatio;
             draw->AddRectFilled(ImVec2(sp.x-boxW-6,sp.y-bh), ImVec2(sp.x-boxW-3,sp.y), hc);
         }
+
         if (g_VisualsConfig.name) {
             player_info_t info;
             if (engine->GetPlayerInfo(i, &info))
                 draw->AddText(ImVec2(sp.x-boxW,sh.y-14), col, info.name);
         }
+
+        if (g_VisualsConfig.weapon) {
+            uintptr_t weapon = 0;
+            uintptr_t weaponServices = Mem::Read<uintptr_t>(player + Offsets::NetVar::m_pWeaponServices);
+            if (weaponServices) {
+                uintptr_t weaponHandle = Mem::Read<uintptr_t>(weaponServices + 0xC0);
+                if (weaponHandle)
+                    weapon = reinterpret_cast<uintptr_t>(Interfaces::entityList->GetClientEntityFromHandle(weaponHandle));
+            }
+            if (weapon) {
+                int idx = Mem::Read<int>(weapon + Offsets::NetVar::m_iItemDefinitionIndex);
+                const char* wpnNames[] = {"", "Deagle", "Dualies", "Five-7", "Glock", "AK-47", "AUG", "AWP", "FAMAS", "G3SG1", "Galil", "M4A4", "M4A1-S", "SCAR-20", "SG 553", "SSG 08", "MP9", "MP7", "MP5-SD", "P90", "UMP-45", "MAC-10", "PP-Bizon", "MAG-7", "Nova", "XM1014", "M249", "Negev", "Flash", "HE", "Smoke", "Molotov", "Decoy", "Incendiary", "C4"};
+                if (idx >= 1 && idx <= 34)
+                    draw->AddText(ImVec2(sp.x-boxW, sp.y+2), col, wpnNames[idx]);
+            }
+        }
+
         if (g_VisualsConfig.snaplines)
-            draw->AddLine(ImVec2(w/2,h), ImVec2(sp.x,sp.y), col);
+            draw->AddLine(ImVec2(w/2.f,h), ImVec2(sp.x,sp.y), col);
     }
 }

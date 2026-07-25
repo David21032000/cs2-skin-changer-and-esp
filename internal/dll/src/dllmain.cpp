@@ -1,54 +1,33 @@
 #include <windows.h>
-#include <d3d11.h>
 #include <cstdio>
-#include <MinHook/MinHook.h>
+#include "init.h"
+#include "hooks.h"
+#include "hooks_game.h"
 
 static void Log(const char* msg) {
     FILE* f = fopen("camus_debug.txt", "a");
     if (f) { fprintf(f, "%s\n", msg); fclose(f); }
 }
 
-namespace Hooks {
-    bool initialize();
-    void shutdown();
-}
-
-namespace Cheat {
-    bool initialize() {
-        AllocConsole();
-        freopen_s((FILE**)stdin, "CONIN$", "r", stdin);
-        freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
-        return true;
-    }
-    void shutdown() {
-        if (GetConsoleWindow())
-            FreeConsole();
-    }
-}
-
 DWORD WINAPI CheatThread(LPVOID lpParam) {
     Log("step 1: AllocConsole...");
-    Cheat::initialize();
+    AllocConsole();
+    freopen_s((FILE**)stdin, "CONIN$", "r", stdin);
+    freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
     Log("step 2: console done");
 
     Sleep(100);
 
-    Log("step 3: MH_Init...");
-    if (MH_Initialize() != MH_OK) {
-        Log("step 3: MH_Init FAILED");
-        Cheat::shutdown();
-        return 1;
-    }
-    Log("step 4: MH_Init OK");
+    Log("step 3: InitEverything...");
+    InitEverything();
+    Log("step 4: InitEverything done");
 
-    Log("step 5: Hooks::init...");
+    Log("step 5: Hooks::initialize (D3D11)...");
     if (!Hooks::initialize()) {
-        Log("step 5: Hooks::init FAILED");
-        MH_Uninitialize();
-        Cheat::shutdown();
+        Log("step 5: D3D11 FAILED");
         return 1;
     }
-    Log("step 6: Hooks::init OK");
+    Log("step 6: cheat running");
 
     MSG msg = { 0 };
     while (msg.message != WM_QUIT) {
@@ -59,10 +38,9 @@ DWORD WINAPI CheatThread(LPVOID lpParam) {
         Sleep(1);
     }
 
-    MH_DisableHook(MH_ALL_HOOKS);
-    MH_Uninitialize();
+    Hooks::ShutdownGameHooks();
     Hooks::shutdown();
-    Cheat::shutdown();
+    FreeConsole();
     return 0;
 }
 

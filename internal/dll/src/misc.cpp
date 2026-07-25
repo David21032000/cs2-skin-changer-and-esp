@@ -1,22 +1,19 @@
 #include "misc.h"
+#include "menu.h"
 #include "interfaces.h"
 #include "math.h"
 #include "offsets.h"
-#include "aimbot.h"
 #include "imgui/imgui.h"
 #include <cstdio>
 #include <string>
 #include <vector>
 
-extern MiscConfig g_MiscConfig;
-
-void Misc::Run(void* cmdPtr) {
-    auto cmd = (CUserCmd*)cmdPtr;
+void Misc::Run(CUserCmd* cmd) {
     if (!cmd) return;
 }
 
 void Misc::RenderWatermark() {
-    if (!g_MiscConfig.watermark) return;
+    if (!g_VisualsConfig.watermark) return;
     auto draw = ImGui::GetForegroundDrawList();
     if (!draw) return;
     char buf[128];
@@ -25,7 +22,7 @@ void Misc::RenderWatermark() {
 }
 
 void Misc::SpectatorList() {
-    if (!g_MiscConfig.spectatorList) return;
+    if (!g_VisualsConfig.spectatorList) return;
     auto draw = ImGui::GetForegroundDrawList();
     if (!draw) return;
     auto el = Interfaces::entityList;
@@ -35,9 +32,11 @@ void Misc::SpectatorList() {
     if (!local) return;
     std::vector<std::string> sp;
     for (int i = 1; i <= 64; i++) {
-        uintptr_t e = *(uintptr_t*)((uintptr_t)el + 8*(i&0x7FFF)+0x10);
-        if (!e) continue;
-        uintptr_t p = *(uintptr_t*)(e + 0x78*(i>>0x1C)+0x10);
+        uintptr_t list = Mem::Read<uintptr_t>(Offsets::dwEntityList);
+        if (!list) continue;
+        uintptr_t entry = Mem::Read<uintptr_t>(list + i * 0x10);
+        if (!entry) continue;
+        uintptr_t p = Mem::Read<uintptr_t>(entry + 0x10 * (i & 0x1FF));
         if (!p) continue;
     }
     if (!sp.empty()) {

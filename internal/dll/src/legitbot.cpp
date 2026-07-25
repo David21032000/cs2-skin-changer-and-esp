@@ -1,14 +1,15 @@
 #include "legitbot.h"
+#include "menu.h"
 #include <algorithm>
 #include <cstdlib>
 #include <limits>
 
 static uintptr_t GetLocalPlayer() {
-    return Mem::Read<uintptr_t>(Offsets::client + Offsets::dwLocalPlayerPawn);
+    return Mem::Read<uintptr_t>(Offsets::dwLocalPlayerPawn);
 }
 
 static uintptr_t GetEntityFromList(int index) {
-    uintptr_t list = Mem::Read<uintptr_t>(Offsets::client + Offsets::dwEntityList);
+    uintptr_t list = Mem::Read<uintptr_t>(Offsets::dwEntityList);
     if (!list) return 0;
     uintptr_t entry = Mem::Read<uintptr_t>(list + index * 0x10);
     if (!entry) return 0;
@@ -48,14 +49,12 @@ static Vec3 GetHitboxPos(uintptr_t entity, int hitbox) {
 }
 
 static bool IsKeyDown(int key) {
-    switch (key) {
-        case 0: return true;
-        case 1: return (GetAsyncKeyState(VK_XBUTTON1) & 0x8000) != 0;
-        case 2: return (GetAsyncKeyState(VK_SHIFT) & 0x8000) != 0;
-        case 3: return (GetAsyncKeyState(VK_CONTROL) & 0x8000) != 0;
-        case 4: return (GetAsyncKeyState(VK_MENU) & 0x8000) != 0;
-        default: return true;
-    }
+    if (key == 0) return true;
+    if (key == 1) return (GetAsyncKeyState(VK_XBUTTON1) & 0x8000) != 0;
+    if (key == 2) return (GetAsyncKeyState(VK_SHIFT) & 0x8000) != 0;
+    if (key == 3) return (GetAsyncKeyState(VK_CONTROL) & 0x8000) != 0;
+    if (key == 4) return (GetAsyncKeyState(VK_MENU) & 0x8000) != 0;
+    return true;
 }
 
 static Vec3 GetPunchAngles(uintptr_t local) {
@@ -71,22 +70,20 @@ static float GetFovToTarget(const Vec3& localEye, const Vec3& targetPos, const V
 }
 
 void Legitbot::Run(CUserCmd* cmd) {
-    static LegitbotConfig cfg;
-    static float lastTriggerTime = 0.f;
-    if (!cfg.enabled || !cmd) return;
+    if (!g_LegitConfig.enabled || !cmd) return;
     uintptr_t local = GetLocalPlayer();
     if (!local) return;
     int localTeam = Mem::Read<int>(local + Offsets::NetVar::m_iTeamNum);
     Vec3 localPos = Mem::Read<Vec3>(local + Offsets::NetVar::m_vecAbsOrigin);
     Vec3 localEye = localPos + Mem::Read<Vec3>(local + Offsets::NetVar::m_vecViewOffset);
-    bool keyHeld = IsKeyDown(cfg.aimKey);
-    if (!keyHeld && !cfg.triggerbot) return;
+    bool keyHeld = IsKeyDown(0);
+    if (!keyHeld && !g_LegitConfig.triggerbot) return;
     Vec3 punch = {};
-    if (cfg.rcs && keyHeld) {
-        punch = GetPunchAngles(local) * (cfg.rcsAmount / 100.f);
+    if (g_LegitConfig.rcs && keyHeld) {
+        punch = GetPunchAngles(local) * (g_LegitConfig.rcsAmount / 100.f);
     }
     uintptr_t bestTarget = 0;
-    float bestFov = cfg.fov;
+    float bestFov = g_LegitConfig.fov;
     Vec3 bestPos;
     for (int i = 1; i <= 64; i++) {
         uintptr_t entity = GetEntityFromList(i);
@@ -95,30 +92,9 @@ void Legitbot::Run(CUserCmd* cmd) {
         int health = Mem::Read<int>(entity + Offsets::NetVar::m_iHealth);
         if (health <= 0 || health > 100) continue;
         if (Mem::Read<bool>(entity + Offsets::NetVar::m_bDormant)) continue;
-        Vec3 targetPos = GetHitboxPos(entity, cfg.hitbox);
+        Vec3 targetPos = GetHitboxPos(entity, g_LegitConfig.hitbox);
         float fov = GetFovToTarget(localEye, targetPos, cmd->viewangles);
         if (fov > bestFov) continue;
-        if (cfg.visibleOnly) {
-            Vec3 forward;
-            AngleVectors(cmd->viewangles, &forward);
-            Vec3 end = localEye + forward * 8192.f;
-        }
-        if (cfg.triggerbot) {
-            float curTime = Mem::Read<float>(reinterpret_cast<uintptr_t>(Interfaces::globalVars) + 0x8);
-            if (curTime - lastTriggerTime < cfg.triggerDelay) continue;
-            Vec3 forward;
-            AngleVectors(cmd->viewangles, &forward);
-            Vec3 end = localEye + forward * 8192.f;
-            Vec3 targetCenter = GetHitboxPos(entity, 6);
-            float crossDist = (localEye + forward * localEye.DistTo(targetCenter)).DistTo(targetCenter);
-            if (crossDist < 15.f) {
-                cmd->buttons &= ~1;
-                cmd->buttons |= 1;
-                lastTriggerTime = curTime;
-                return;
-            }
-            continue;
-        }
         bestTarget = entity;
         bestPos = targetPos;
         bestFov = fov;
@@ -131,7 +107,7 @@ void Legitbot::Run(CUserCmd* cmd) {
     Vec3 current = cmd->viewangles;
     Vec3 delta = aimAngles - current;
     delta.Clamp();
-    float smoothFactor = cfg.smooth > 1.f ? 1.f / cfg.smooth : 1.f;
+    float smoothFactor = g_LegitConfig.smoothing > 1.f ? 1.f / g_LegitConfig.smoothing : 1.f;
     float randomFactor = ((std::rand() % 100) / 100.f - 0.5f) * 0.1f;
     smoothFactor += randomFactor;
     if (smoothFactor > 1.f) smoothFactor = 1.f;

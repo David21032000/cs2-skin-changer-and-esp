@@ -1,28 +1,8 @@
 #pragma once
 #include "math.h"
+#include "usercmd.h"
 #include "interfaces.h"
 #include <vector>
-
-struct CUserCmd {
-    virtual ~CUserCmd() = default;
-    int commandNumber;
-    int tickCount;
-    Vec3 viewangles;
-    Vec3 aimdirection;
-    float forwardmove;
-    float sidemove;
-    float upmove;
-    int buttons;
-    char impulse;
-    int weaponselect;
-    int weaponsubtype;
-    int randomseed;
-    short mousedx;
-    short mousedy;
-    bool hasbeenpredicted;
-    Vec3 headangles;
-    Vec3 headoffset;
-};
 
 enum CSWeaponType : int {
     WEAPONTYPE_KNIFE = 0,
@@ -36,18 +16,6 @@ enum CSWeaponType : int {
     WEAPONTYPE_PLACEHOLDER = 8,
     WEAPONTYPE_GRENADE = 9,
     WEAPONTYPE_UNKNOWN = 10
-};
-
-struct AimbotConfig {
-    bool enabled = false;
-    float fov = 30.f;
-    float hitchance = 70.f;
-    int minDamage = 20;
-    bool silent = true;
-    bool autoShoot = true;
-    bool visibleOnly = true;
-    int hitboxPriority = 0;
-    float multipointScale = 0.5f;
 };
 
 struct WeaponInfo {

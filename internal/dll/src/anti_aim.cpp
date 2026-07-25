@@ -1,17 +1,11 @@
 #include "anti_aim.h"
+#include "menu.h"
 #include <algorithm>
 #include <cstdlib>
+#include <cmath>
 
 static uintptr_t GetLocalPlayer() {
-    return Mem::Read<uintptr_t>(Offsets::client + Offsets::dwLocalPlayerPawn);
-}
-
-static bool IsAttacking(CUserCmd* cmd) {
-    return (cmd->buttons & 1) != 0;
-}
-
-static bool IsMoving(CUserCmd* cmd) {
-    return cmd->forwardmove != 0.f || cmd->sidemove != 0.f;
+    return Mem::Read<uintptr_t>(Offsets::dwLocalPlayerPawn);
 }
 
 static int GetChokedCommands(uintptr_t player) {
@@ -22,90 +16,89 @@ static void SetChokedCommands(uintptr_t player, int value) {
     Mem::Write<int>(player + 0xC4C, value);
 }
 
-static float GetRandomFloat(float min, float max) {
-    return min + (max - min) * (std::rand() / (float)RAND_MAX);
-}
-
-void AntiAim::Run(CUserCmd* cmd) {
-    static AntiAimConfig cfg;
-    static float spinAngle = 0.f;
-    static bool jitterFlip = false;
-    static int fakelagAccum = 0;
-
-    if (!cfg.enabled || !cmd) return;
-    if (IsAttacking(cmd)) return;
+void AntiAim::Run(CUserCmd* cmd, bool* sendPacket) {
+    if (!g_AAConfig.enabled || !cmd) return;
 
     uintptr_t local = GetLocalPlayer();
     if (!local) return;
 
     Vec3& ang = cmd->viewangles;
 
-    switch (cfg.pitchMode) {
+    switch (g_AAConfig.pitch) {
         case 1: ang.x = -89.f; break;
         case 2: ang.x = 89.f; break;
+        case 3: ang.x = 0.f; break;
+        case 4: ang.x = ang.x > 0.f ? -89.f : 89.f; break;
         default: break;
     }
 
-    switch (cfg.yawMode) {
-        case 1: {
-            spinAngle += cfg.spinSpeed;
+    static float spinAngle = 0.f;
+    switch (g_AAConfig.yaw) {
+        case 1: ang.y += 180.f; break;
+        case 2: ang.y += 90.f; break;
+        case 3: {
+            static bool jitterFlip = false;
+            jitterFlip = !jitterFlip;
+            ang.y += jitterFlip ? 30.f : -30.f;
+            break;
+        }
+        case 4: {
+            spinAngle += g_AAConfig.spinSpeed;
             if (spinAngle > 180.f) spinAngle -= 360.f;
             ang.y = spinAngle;
             break;
         }
-        case 2: {
-            jitterFlip = !jitterFlip;
-            ang.y += jitterFlip ? cfg.jitterRange : -cfg.jitterRange;
-            break;
-        }
-        case 3: {
-            ang.y += 180.f;
-            break;
-        }
-        case 4: {
-            ang.y += 90.f;
-            break;
-        }
         case 5: {
-            ang.y += 90.f;
+            spinAngle += g_AAConfig.spinSpeed;
+            ang.y = spinAngle;
             break;
         }
         default: break;
     }
 
-    if (cfg.yawMode == 0) {
-        ang.z = 0.f;
-    }
-
+    ang.y += static_cast<float>(g_AAConfig.yawOffset);
     ang.Clamp();
 
-    if (cfg.desync) {
-        float desyncAng = std::min(cfg.desyncAmount, 58.f);
-        if (cfg.desyncDir == 0) {
-            ang.y -= desyncAng;
-        } else {
-            ang.y += desyncAng;
+    if (g_AAConfig.atTarget) {
+        uintptr_t bestTarget = 0;
+        float bestFov = FLT_MAX;
+        int localTeam = Mem::Read<int>(local + Offsets::NetVar::m_iTeamNum);
+        Vec3 localPos = Mem::Read<Vec3>(local + Offsets::NetVar::m_vecAbsOrigin);
+        for (int i = 1; i <= 64; i++) {
+            uintptr_t list = Mem::Read<uintptr_t>(Offsets::dwEntityList);
+            if (!list) continue;
+            uintptr_t entry = Mem::Read<uintptr_t>(list + i * 0x10);
+            if (!entry) continue;
+            uintptr_t entity = Mem::Read<uintptr_t>(entry + 0x10 * (i & 0x1FF));
+            if (!entity) continue;
+            if (Mem::Read<int>(entity + Offsets::NetVar::m_iTeamNum) == localTeam) continue;
+            int health = Mem::Read<int>(entity + Offsets::NetVar::m_iHealth);
+            if (health <= 0 || health > 100) continue;
+            bestTarget = entity;
+            break;
         }
-        ang.Clamp();
-        uintptr_t playerPawn = local;
-        if (playerPawn) {
-            float eyeYaw = ang.y;
-            Mem::Write<float>(playerPawn + 0x14B0, eyeYaw);
+        if (bestTarget) {
+            Vec3 targetPos = Mem::Read<Vec3>(bestTarget + Offsets::NetVar::m_vecAbsOrigin);
+            Vec3 angleToTarget = CalcAngle(localPos, targetPos);
+            ang.y = angleToTarget.y + 180.f + static_cast<float>(g_AAConfig.yawOffset);
         }
     }
 
-    if (cfg.fakelag) {
-        int targetChoke = cfg.fakelagAmount;
-        if (cfg.fakelagVariance) {
-            targetChoke -= static_cast<int>(GetRandomFloat(0, 3));
-            if (targetChoke < 1) targetChoke = 1;
+    if (g_AAConfig.edgeDetect) {
+        if (local) {
+            Vec3 localPos = Mem::Read<Vec3>(local + Offsets::NetVar::m_vecAbsOrigin);
         }
-        int choked = GetChokedCommands(local);
-        if (choked < targetChoke) {
-            SetChokedCommands(local, choked + 1);
-            cmd->commandNumber = cmd->commandNumber;
+    }
+
+    if (g_AAConfig.fakelag && sendPacket) {
+        static int chokedCommands = 0;
+        int targetChoke = std::min(g_AAConfig.fakelagLimit, 14);
+        if (chokedCommands >= targetChoke) {
+            *sendPacket = true;
+            chokedCommands = 0;
         } else {
-            SetChokedCommands(local, 0);
+            *sendPacket = false;
+            chokedCommands++;
         }
     }
 }
