@@ -29,8 +29,15 @@ namespace {
 }
 
 static void Log(const char* msg) {
-    FILE* f = fopen("camus_debug.txt", "a");
-    if (f) { fprintf(f, "%s\n", msg); fclose(f); }
+    HANDLE hFile = CreateFileA("camus_debug.txt", GENERIC_WRITE,
+        FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hFile != INVALID_HANDLE_VALUE) {
+        SetFilePointer(hFile, 0, NULL, FILE_END);
+        DWORD written;
+        WriteFile(hFile, msg, (DWORD)strlen(msg), &written, NULL);
+        WriteFile(hFile, "\r\n", 2, &written, NULL);
+        CloseHandle(hFile);
+    }
 }
 
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
@@ -118,6 +125,7 @@ HRESULT __stdcall ResizeBuffers_hook(IDXGISwapChain* pSwapChain, UINT BufferCoun
 }
 
 bool Hooks::initialize() {
+    Log("init: creating temp D3D11 device for vtable hook");
     Log("init: creating temp D3D11 device for vtable hook");
     DXGI_SWAP_CHAIN_DESC scd = {};
     scd.BufferCount = 1;
