@@ -25,11 +25,13 @@
 namespace Mem {
     template <typename T>
     T Read(uintptr_t addr) {
+        if (!addr) return T{};
         return *reinterpret_cast<T*>(addr);
     }
 
     template <typename T>
     void Write(uintptr_t addr, T val) {
+        if (!addr) return;
         *reinterpret_cast<T*>(addr) = val;
     }
 

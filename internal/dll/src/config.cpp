@@ -258,22 +258,19 @@ static void DeserializeVisuals(const json& j) {
     if (j.contains("grenadePrediction")) c.grenadePrediction = j["grenadePrediction"];
     if (j.contains("bombTimer")) c.bombTimer = j["bombTimer"];
     if (j.contains("playerInfo")) c.playerInfo = j["playerInfo"];
-    if (j.contains("boxColor") && j["boxColor"].is_array()) {
-        auto& arr = j["boxColor"];
-        c.boxColor = ImColor((float)arr[0], (float)arr[1], (float)arr[2], (float)arr[3]);
-    }
-    if (j.contains("glowColor") && j["glowColor"].is_array()) {
-        auto& arr = j["glowColor"];
-        c.glowColor = ImColor((float)arr[0], (float)arr[1], (float)arr[2], (float)arr[3]);
-    }
-    if (j.contains("visibleColor") && j["visibleColor"].is_array()) {
-        auto& arr = j["visibleColor"];
-        c.visibleColor = ImColor((float)arr[0], (float)arr[1], (float)arr[2], (float)arr[3]);
-    }
-    if (j.contains("invisibleColor") && j["invisibleColor"].is_array()) {
-        auto& arr = j["invisibleColor"];
-        c.invisibleColor = ImColor((float)arr[0], (float)arr[1], (float)arr[2], (float)arr[3]);
-    }
+    auto loadColor = [](const json& arr) -> ImColor {
+        if (arr.size() >= 4)
+            return ImColor((float)arr[0], (float)arr[1], (float)arr[2], (float)arr[3]);
+        return ImColor(255, 255, 255);
+    };
+    if (j.contains("boxColor") && j["boxColor"].is_array())
+        c.boxColor = loadColor(j["boxColor"]);
+    if (j.contains("glowColor") && j["glowColor"].is_array())
+        c.glowColor = loadColor(j["glowColor"]);
+    if (j.contains("visibleColor") && j["visibleColor"].is_array())
+        c.visibleColor = loadColor(j["visibleColor"]);
+    if (j.contains("invisibleColor") && j["invisibleColor"].is_array())
+        c.invisibleColor = loadColor(j["invisibleColor"]);
 }
 
 static void DeserializeMovement(const json& j) {

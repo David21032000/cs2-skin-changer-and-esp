@@ -127,7 +127,7 @@ int Aimbot::EstimateDamage(uintptr_t entity, const Vec3& pos, WeaponInfo* wpn) {
     Vec3 localPos = Mem::Read<Vec3>(GetLocalPlayer() + Offsets::NetVar::m_vecAbsOrigin);
     Vec3 localEye = localPos + Mem::Read<Vec3>(GetLocalPlayer() + Offsets::NetVar::m_vecViewOffset);
     float dist = localEye.DistTo(pos);
-    if (dist > wpn->range) return 0;
+    if (dist > wpn->range || wpn->range < 0.1f) return 0;
     float dmgMult = 1.f - (dist / wpn->range) * 0.5f;
     int rawDmg = static_cast<int>(wpn->maxDamage * dmgMult);
     int health = Mem::Read<int>(entity + Offsets::NetVar::m_iHealth);

@@ -379,12 +379,5 @@ bool PromptForKey() {
         return false;
     }
 
-    // Fallback: use InputBox via WinAPI
-    char input[256] = { 0 };
-    if (DialogBoxParamA(nullptr, nullptr, nullptr, nullptr, (LPARAM)input)) {
-        // If dialog returned, parse input
-        key = input;
-    }
-
     return false;
 }

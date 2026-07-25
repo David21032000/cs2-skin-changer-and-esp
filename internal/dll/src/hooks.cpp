@@ -17,9 +17,8 @@ typedef HRESULT(__stdcall* ResizeBuffers_t)(IDXGISwapChain*, UINT, UINT, UINT, D
 namespace {
     Present_t originalPresent = nullptr;
     ResizeBuffers_t originalResizeBuffers = nullptr;
-    void*** g_vtablePtr = nullptr;
+    void** g_vtableHooked = nullptr;
 
-    IDXGISwapChain* g_pSwapChain = nullptr;
     ID3D11Device* g_pDevice = nullptr;
     ID3D11DeviceContext* g_pContext = nullptr;
     HWND g_hWindow = nullptr;
@@ -45,27 +44,37 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 HRESULT __stdcall Present_hook(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags) {
     if (!g_initialized) {
         Log("hook: init start");
-        g_pSwapChain = pSwapChain;
         if (SUCCEEDED(pSwapChain->GetDevice(__uuidof(ID3D11Device), (void**)&g_pDevice))) {
             g_pDevice->GetImmediateContext(&g_pContext);
             DXGI_SWAP_CHAIN_DESC desc;
-            pSwapChain->GetDesc(&desc);
+            if (FAILED(pSwapChain->GetDesc(&desc))) {
+                Log("hook: GetDesc FAILED");
+                return originalPresent(pSwapChain, SyncInterval, Flags);
+            }
             g_hWindow = desc.OutputWindow;
-            g_originalWndProc = (WNDPROC)SetWindowLongPtrA(g_hWindow, GWLP_WNDPROC, (LONG_PTR)WndProc);
 
             Log("hook: creating ImGui context");
             ImGui::CreateContext();
             ImGuiIO& io = ImGui::GetIO();
             io.ConfigFlags |= ImGuiConfigFlags_NoMouseCursorChange;
 
+            g_originalWndProc = (WNDPROC)SetWindowLongPtrA(g_hWindow, GWLP_WNDPROC, (LONG_PTR)WndProc);
+
             Log("hook: ImGui_ImplWin32_Init");
-            ImGui_ImplWin32_Init(g_hWindow);
+            if (!ImGui_ImplWin32_Init(g_hWindow)) {
+                Log("hook: ImGui_ImplWin32_Init FAILED");
+                return originalPresent(pSwapChain, SyncInterval, Flags);
+            }
             Log("hook: ImGui_ImplDX11_Init");
-            ImGui_ImplDX11_Init(g_pDevice, g_pContext);
+            if (!ImGui_ImplDX11_Init(g_pDevice, g_pContext)) {
+                Log("hook: ImGui_ImplDX11_Init FAILED");
+                return originalPresent(pSwapChain, SyncInterval, Flags);
+            }
             g_initialized = true;
             Log("hook: init done");
         } else {
             Log("hook: GetDevice FAILED");
+            return originalPresent(pSwapChain, SyncInterval, Flags);
         }
     }
 
@@ -73,9 +82,7 @@ HRESULT __stdcall Present_hook(IDXGISwapChain* pSwapChain, UINT SyncInterval, UI
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 
-    // Run game loop (visuals, thirdperson, etc.)
     Hooks::GameLoop();
-
     Menu::Render();
     Menu::RenderWatermark();
 
@@ -89,9 +96,12 @@ HRESULT __stdcall ResizeBuffers_hook(IDXGISwapChain* pSwapChain, UINT BufferCoun
     UINT Width, UINT Height, DXGI_FORMAT NewFormat, UINT SwapChainFlags) {
     if (g_initialized) {
         ImGui_ImplDX11_InvalidateDeviceObjects();
+    }
+    HRESULT hr = originalResizeBuffers(pSwapChain, BufferCount, Width, Height, NewFormat, SwapChainFlags);
+    if (g_initialized && SUCCEEDED(hr)) {
         ImGui_ImplDX11_CreateDeviceObjects();
     }
-    return originalResizeBuffers(pSwapChain, BufferCount, Width, Height, NewFormat, SwapChainFlags);
+    return hr;
 }
 
 bool Hooks::initialize() {
@@ -121,8 +131,8 @@ bool Hooks::initialize() {
     }
     Log("init: D3D11 OK");
 
-    g_vtablePtr = (void***)tempSwapChain;
-    void** vtable = *g_vtablePtr;
+    void** vtable = *(void***)tempSwapChain;
+    g_vtableHooked = vtable;
 
     DWORD oldProtect;
     VirtualProtect(&vtable[8], sizeof(void*), PAGE_READWRITE, &oldProtect);
@@ -145,25 +155,29 @@ bool Hooks::initialize() {
 }
 
 void Hooks::shutdown() {
-    if (g_vtablePtr) {
-        void** vtable = *g_vtablePtr;
+    if (g_vtableHooked) {
         DWORD oldProtect;
-        VirtualProtect(&vtable[8], sizeof(void*), PAGE_READWRITE, &oldProtect);
-        vtable[8] = (void*)originalPresent;
-        VirtualProtect(&vtable[8], sizeof(void*), oldProtect, &oldProtect);
-
-        VirtualProtect(&vtable[13], sizeof(void*), PAGE_READWRITE, &oldProtect);
-        vtable[13] = (void*)originalResizeBuffers;
-        VirtualProtect(&vtable[13], sizeof(void*), oldProtect, &oldProtect);
+        if (originalPresent) {
+            VirtualProtect(&g_vtableHooked[8], sizeof(void*), PAGE_READWRITE, &oldProtect);
+            g_vtableHooked[8] = (void*)originalPresent;
+            VirtualProtect(&g_vtableHooked[8], sizeof(void*), oldProtect, &oldProtect);
+        }
+        if (originalResizeBuffers) {
+            VirtualProtect(&g_vtableHooked[13], sizeof(void*), PAGE_READWRITE, &oldProtect);
+            g_vtableHooked[13] = (void*)originalResizeBuffers;
+            VirtualProtect(&g_vtableHooked[13], sizeof(void*), oldProtect, &oldProtect);
+        }
+        g_vtableHooked = nullptr;
     }
 
     if (g_initialized) {
+        if (g_originalWndProc && g_hWindow)
+            SetWindowLongPtrA(g_hWindow, GWLP_WNDPROC, (LONG_PTR)g_originalWndProc);
         ImGui_ImplDX11_Shutdown();
         ImGui_ImplWin32_Shutdown();
         ImGui::DestroyContext();
-        if (g_originalWndProc && g_hWindow)
-            SetWindowLongPtrA(g_hWindow, GWLP_WNDPROC, (LONG_PTR)g_originalWndProc);
         if (g_pContext) g_pContext->Release();
         if (g_pDevice) g_pDevice->Release();
+        g_initialized = false;
     }
 }

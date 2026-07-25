@@ -34,6 +34,8 @@ namespace {
 void __fastcall CreateMove_hook(void* thisptr, int sequence_number,
     float input_sample_frametime, bool active, bool* sendPacket)
 {
+    if (!g_originalCreateMove || !g_originalGetUserCmd || !thisptr) return;
+
     CreateMoveFn original = (CreateMoveFn)g_originalCreateMove;
     original(thisptr, sequence_number, input_sample_frametime, active, sendPacket);
 
