@@ -1,19 +1,14 @@
 #include "anti_aim.h"
 #include "menu.h"
+#include "offsets.h"
+#include "interfaces.h"
 #include <algorithm>
 #include <cstdlib>
 #include <cmath>
+#include <cfloat>
 
 static uintptr_t GetLocalPlayer() {
     return Mem::Read<uintptr_t>(Offsets::dwLocalPlayerPawn);
-}
-
-static int GetChokedCommands(uintptr_t player) {
-    return Mem::Read<int>(player + 0xC4C);
-}
-
-static void SetChokedCommands(uintptr_t player, int value) {
-    Mem::Write<int>(player + 0xC4C, value);
 }
 
 void AntiAim::Run(CUserCmd* cmd, bool* sendPacket) {
@@ -60,8 +55,6 @@ void AntiAim::Run(CUserCmd* cmd, bool* sendPacket) {
     ang.Clamp();
 
     if (g_AAConfig.atTarget) {
-        uintptr_t bestTarget = 0;
-        float bestFov = FLT_MAX;
         int localTeam = Mem::Read<int>(local + Offsets::NetVar::m_iTeamNum);
         Vec3 localPos = Mem::Read<Vec3>(local + Offsets::NetVar::m_vecAbsOrigin);
         for (int i = 1; i <= 64; i++) {
@@ -74,22 +67,32 @@ void AntiAim::Run(CUserCmd* cmd, bool* sendPacket) {
             if (Mem::Read<int>(entity + Offsets::NetVar::m_iTeamNum) == localTeam) continue;
             int health = Mem::Read<int>(entity + Offsets::NetVar::m_iHealth);
             if (health <= 0 || health > 100) continue;
-            bestTarget = entity;
-            break;
-        }
-        if (bestTarget) {
-            Vec3 targetPos = Mem::Read<Vec3>(bestTarget + Offsets::NetVar::m_vecAbsOrigin);
+            Vec3 targetPos = Mem::Read<Vec3>(entity + Offsets::NetVar::m_vecAbsOrigin);
             Vec3 angleToTarget = CalcAngle(localPos, targetPos);
             ang.y = angleToTarget.y + 180.f + static_cast<float>(g_AAConfig.yawOffset);
+            break;
         }
     }
 
-    if (g_AAConfig.edgeDetect) {
-        if (local) {
-            Vec3 localPos = Mem::Read<Vec3>(local + Offsets::NetVar::m_vecAbsOrigin);
-        }
+    // Desync (Neverloss): separate eye angles from body yaw
+    if (g_AAConfig.desync) {
+        float desyncAmount = std::min(g_AAConfig.desyncAmount, 58.f);
+        float eyeYaw = ang.y;
+        if (g_AAConfig.desyncDir == 0)
+            eyeYaw += desyncAmount;
+        else
+            eyeYaw -= desyncAmount;
+
+        Vec3 eyeAngles;
+        eyeAngles.x = ang.x;
+        eyeAngles.y = eyeYaw;
+        eyeAngles.z = 0.f;
+        eyeAngles.Clamp();
+
+        Mem::Write<Vec3>(local + Offsets::NetVar::m_angEyeAngles, eyeAngles);
     }
 
+    // Fakelag
     if (g_AAConfig.fakelag && sendPacket) {
         static int chokedCommands = 0;
         int targetChoke = std::min(g_AAConfig.fakelagLimit, 14);

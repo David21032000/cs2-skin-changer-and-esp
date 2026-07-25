@@ -17,6 +17,7 @@ struct RageAimbotConfig {
     bool visibleOnly = true;
     bool deathmatchMode = false;
     bool jumpShot = false;
+    bool doubleTap = false;
     int selectedWeapon = 0;
 };
 
@@ -50,6 +51,9 @@ struct AntiAimConfig {
     bool fakelag = false;
     int fakelagLimit = 14;
     bool fakelagOnMove = true;
+    bool desync = false;
+    float desyncAmount = 58.f;
+    int desyncDir = 0;
 };
 
 struct VisualsConfig {

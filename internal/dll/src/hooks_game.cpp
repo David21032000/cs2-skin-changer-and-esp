@@ -47,6 +47,25 @@ void __fastcall CreateMove_hook(void* thisptr, int sequence_number,
     Legitbot::Run(cmd);
     Movement::Run(cmd);
     AntiAim::Run(cmd, sendPacket);
+
+    // ── Double Tap ──────────────────────────────────────────
+    static bool dtCharged = false;
+    if (g_RageConfig.doubleTap) {
+        bool attacking = (cmd->buttons & (1 << 0));
+        bool released = false;
+        if (dtCharged) {
+            cmd->buttons |= (1 << 0);
+            *sendPacket = true;
+            dtCharged = false;
+            released = true;
+        }
+        if (!released && attacking) {
+            dtCharged = true;
+            *sendPacket = false;
+        }
+    } else {
+        dtCharged = false;
+    }
 }
 
 bool Hooks::InitGameHooks() {
