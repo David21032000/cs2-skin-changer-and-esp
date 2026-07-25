@@ -183,19 +183,25 @@ bool ManualMapDll(HANDLE hProcess, const std::vector<BYTE>& dllData) {
     return true;
 }
 
+static void wait_and_exit(int code) {
+    printf("\nPress any key to exit...");
+    getchar();
+    exit(code);
+}
+
 int main(int argc, char* argv[]) {
     const char* targetProcess = "cs2.exe";
     DWORD pid = FindProcessIdA(targetProcess);
     if (!pid) {
-        printf("[-] Process %s not found\n", targetProcess);
-        return 1;
+        printf("[-] Process %s not found. Is CS2 running?\n", targetProcess);
+        wait_and_exit(1);
     }
     printf("[+] Found %s (PID: %lu)\n", targetProcess, pid);
 
     HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
     if (!hProcess) {
-        wprintf(L"[-] OpenProcess failed (%lu)\n", GetLastError());
-        return 1;
+        wprintf(L"[-] OpenProcess failed (%lu). Try running as Administrator!\n", GetLastError());
+        wait_and_exit(1);
     }
     wprintf(L"[+] Opened handle to process\n");
 
@@ -209,17 +215,17 @@ int main(int argc, char* argv[]) {
     std::vector<BYTE> dllData;
     if (!ReadDllToMemory(dllPath, dllData)) {
         CloseHandle(hProcess);
-        return 1;
+        wait_and_exit(1);
     }
     wprintf(L"[+] Read DLL (%zu bytes)\n", dllData.size());
 
     if (!ManualMapDll(hProcess, dllData)) {
         wprintf(L"[-] Manual mapping failed\n");
         CloseHandle(hProcess);
-        return 1;
+        wait_and_exit(1);
     }
 
     CloseHandle(hProcess);
     wprintf(L"[+] Injection completed successfully\n");
-    return 0;
+    wait_and_exit(0);
 }

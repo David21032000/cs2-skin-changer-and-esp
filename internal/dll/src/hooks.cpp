@@ -7,6 +7,7 @@
 #include "imgui/imgui_impl_dx11.h"
 #include "hooks.h"
 #include "offsets.h"
+#include "menu.h"
 #include <cstdio>
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -57,25 +58,8 @@ HRESULT __stdcall Present_hook(IDXGISwapChain* pSwapChain, UINT SyncInterval, UI
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 
-    {
-        ImGui::Begin("CS2 Cheat Menu");
-        ImGui::Text("Internal cheat loaded");
-        if (ImGui::Button("Unload"))
-            g_hWindow = nullptr;
-        ImGui::End();
-    }
-
-    {
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0, 0, 0, 0));
-        ImGui::Begin("ESP", nullptr,
-            ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoInputs |
-            ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoBackground);
-        ImGui::Text("ESP overlay");
-        ImGui::End();
-        ImGui::PopStyleColor();
-        ImGui::PopStyleVar();
-    }
+    Menu::Render();
+    Menu::RenderWatermark();
 
     ImGui::Render();
     ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
