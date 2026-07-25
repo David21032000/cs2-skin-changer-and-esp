@@ -31,7 +31,7 @@ bool ReadDllToMemory(const wchar_t* dllPath, std::vector<BYTE>& outBuffer) {
     HANDLE hFile = CreateFileW(dllPath, GENERIC_READ, FILE_SHARE_READ, NULL,
                                OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (hFile == INVALID_HANDLE_VALUE) {
-        wprintf(L"[-] Failed to open DLL: %s\n", dllPath);
+        wprintf(L"[-] Failed to open DLL: %ls\n", dllPath);
         return false;
     }
     DWORD fileSize = GetFileSize(hFile, NULL);
@@ -210,10 +210,11 @@ int main(int argc, char* argv[]) {
     wchar_t* lastSlash = wcsrchr(dllPath, L'\\');
     if (lastSlash) *lastSlash = L'\0';
     wcsncat_s(dllPath, MAX_PATH, L"\\camus.dll", _TRUNCATE);
-    wprintf(L"[+] DLL path: %s\n", dllPath);
+    wprintf(L"[+] DLL path: %ls\n", dllPath);
 
     std::vector<BYTE> dllData;
     if (!ReadDllToMemory(dllPath, dllData)) {
+        wprintf(L"[-] Make sure '%ls' exists next to the injector\n", dllPath);
         CloseHandle(hProcess);
         wait_and_exit(1);
     }
