@@ -1,6 +1,6 @@
 CXX = x86_64-w64-mingw32-g++
-CXXFLAGS = -std=c++20 -O2 -s -static-libgcc -static-libstdc++ -m64 -mconsole
-LDFLAGS = -lntdll -lpsapi
+CXXFLAGS = -std=c++20 -O2 -s -m64 -mconsole
+LDFLAGS = -static-libgcc -static-libstdc++ -static -lntdll -lpsapi
 
 all: camus_injector.exe
 
