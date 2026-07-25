@@ -28,8 +28,13 @@ namespace {
     bool g_cheatInit = false;
 }
 
+char g_dllDir[MAX_PATH] = {0};
+
 static void Log(const char* msg) {
-    HANDLE hFile = CreateFileA("camus_debug.txt", GENERIC_WRITE,
+    if (!g_dllDir[0]) return;
+    char path[MAX_PATH];
+    sprintf_s(path, "%s\\camus_debug.txt", g_dllDir);
+    HANDLE hFile = CreateFileA(path, GENERIC_WRITE,
         FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     if (hFile != INVALID_HANDLE_VALUE) {
         SetFilePointer(hFile, 0, NULL, FILE_END);
