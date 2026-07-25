@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <vector>
+#include <shellapi.h>
 
 #pragma comment(lib, "ntdll.lib")
 #pragma comment(lib, "psapi.lib")
@@ -189,12 +190,24 @@ static void wait_and_exit(int code) {
     exit(code);
 }
 
+static void launch_cs2() {
+    printf("[!] CS2 not running. Launching CS2 via Steam...\n");
+    ShellExecuteA(NULL, "open", "steam://rungameid/730", NULL, NULL, SW_SHOWNORMAL);
+}
+
 int main(int argc, char* argv[]) {
     const char* targetProcess = "cs2.exe";
+
     DWORD pid = FindProcessIdA(targetProcess);
     if (!pid) {
-        printf("[-] Process %s not found. Is CS2 running?\n", targetProcess);
-        wait_and_exit(1);
+        launch_cs2();
+        printf("[!] Waiting for game to launch...\n");
+        while (!pid) {
+            Sleep(2000);
+            pid = FindProcessIdA(targetProcess);
+            printf(".");
+        }
+        printf("\n");
     }
     printf("[+] Found %s (PID: %lu)\n", targetProcess, pid);
 

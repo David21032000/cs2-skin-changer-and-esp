@@ -1,22 +1,22 @@
 #include <windows.h>
 #include <d3d11.h>
 #include <dxgi.h>
-#include <MinHook/MinHook.h>
+#include <cstdio>
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_win32.h"
 #include "imgui/imgui_impl_dx11.h"
 #include "hooks.h"
-#include "offsets.h"
 #include "menu.h"
-#include <cstdio>
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 typedef HRESULT(__stdcall* Present_t)(IDXGISwapChain*, UINT, UINT);
 typedef HRESULT(__stdcall* ResizeBuffers_t)(IDXGISwapChain*, UINT, UINT, UINT, DXGI_FORMAT, UINT);
+
 namespace {
     Present_t originalPresent = nullptr;
     ResizeBuffers_t originalResizeBuffers = nullptr;
+    void*** g_vtablePtr = nullptr;
 
     IDXGISwapChain* g_pSwapChain = nullptr;
     ID3D11Device* g_pDevice = nullptr;
@@ -25,6 +25,12 @@ namespace {
     WNDPROC g_originalWndProc = nullptr;
     bool g_initialized = false;
 }
+
+static void Log(const char* msg) {
+    FILE* f = fopen("camus_debug.txt", "a");
+    if (f) { fprintf(f, "%s\n", msg); fclose(f); }
+}
+
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
         return true;
@@ -33,6 +39,7 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
 HRESULT __stdcall Present_hook(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags) {
     if (!g_initialized) {
+        Log("hook: init start");
         g_pSwapChain = pSwapChain;
         if (SUCCEEDED(pSwapChain->GetDevice(__uuidof(ID3D11Device), (void**)&g_pDevice))) {
             g_pDevice->GetImmediateContext(&g_pContext);
@@ -41,13 +48,19 @@ HRESULT __stdcall Present_hook(IDXGISwapChain* pSwapChain, UINT SyncInterval, UI
             g_hWindow = desc.OutputWindow;
             g_originalWndProc = (WNDPROC)SetWindowLongPtrA(g_hWindow, GWLP_WNDPROC, (LONG_PTR)WndProc);
 
+            Log("hook: creating ImGui context");
             ImGui::CreateContext();
             ImGuiIO& io = ImGui::GetIO();
             io.ConfigFlags |= ImGuiConfigFlags_NoMouseCursorChange;
 
+            Log("hook: ImGui_ImplWin32_Init");
             ImGui_ImplWin32_Init(g_hWindow);
+            Log("hook: ImGui_ImplDX11_Init");
             ImGui_ImplDX11_Init(g_pDevice, g_pContext);
             g_initialized = true;
+            Log("hook: init done");
+        } else {
+            Log("hook: GetDevice FAILED");
         }
     }
 
@@ -72,12 +85,9 @@ HRESULT __stdcall ResizeBuffers_hook(IDXGISwapChain* pSwapChain, UINT BufferCoun
     }
     return originalResizeBuffers(pSwapChain, BufferCount, Width, Height, NewFormat, SwapChainFlags);
 }
-static void Log(const char* msg) {
-    FILE* f = fopen("camus_debug.txt", "a");
-    if (f) { fprintf(f, "%s\n", msg); fclose(f); }
-}
 
 bool Hooks::initialize() {
+    Log("init: creating temp D3D11 device");
     DXGI_SWAP_CHAIN_DESC scd = {};
     scd.BufferCount = 1;
     scd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -88,7 +98,6 @@ bool Hooks::initialize() {
     scd.SampleDesc.Count = 1;
     scd.Windowed = TRUE;
 
-    Log("hooks: creating D3D11 device...");
     IDXGISwapChain* tempSwapChain = nullptr;
     ID3D11Device* tempDevice = nullptr;
     ID3D11DeviceContext* tempContext = nullptr;
@@ -98,52 +107,54 @@ bool Hooks::initialize() {
         nullptr, 0, D3D11_SDK_VERSION, &scd,
         &tempSwapChain, &tempDevice, nullptr, &tempContext
     );
-    if (FAILED(hr)) { Log("hooks: D3D11 FAILED"); return false; }
-    if (!tempSwapChain) { Log("hooks: no swapchain"); return false; }
-    Log("hooks: D3D11 OK");
-
-    void** vtable = *(void***)tempSwapChain;
-    void* presentTarget = vtable[8];
-    void* resizeTarget = vtable[13];
-    Log("hooks: got vtable entries");
-
-    if (MH_CreateHook(presentTarget, (LPVOID)&Present_hook, (void**)&originalPresent) != MH_OK) {
-        Log("hooks: CreateHook Present FAILED");
+    if (FAILED(hr) || !tempSwapChain || !tempDevice) {
+        Log("init: D3D11 device creation FAILED");
         return false;
     }
-    Log("hooks: hooked Present");
+    Log("init: D3D11 OK");
 
-    if (MH_CreateHook(resizeTarget, (LPVOID)&ResizeBuffers_hook, (void**)&originalResizeBuffers) != MH_OK) {
-        Log("hooks: CreateHook Resize FAILED");
-        return false;
-    }
-    Log("hooks: hooked Resize");
+    g_vtablePtr = (void***)tempSwapChain;
+    void** vtable = *g_vtablePtr;
+
+    DWORD oldProtect;
+    VirtualProtect(&vtable[8], sizeof(void*), PAGE_READWRITE, &oldProtect);
+    originalPresent = (Present_t)vtable[8];
+    vtable[8] = (void*)&Present_hook;
+    VirtualProtect(&vtable[8], sizeof(void*), oldProtect, &oldProtect);
+
+    VirtualProtect(&vtable[13], sizeof(void*), PAGE_READWRITE, &oldProtect);
+    originalResizeBuffers = (ResizeBuffers_t)vtable[13];
+    vtable[13] = (void*)&ResizeBuffers_hook;
+    VirtualProtect(&vtable[13], sizeof(void*), oldProtect, &oldProtect);
+
+    Log("init: vtable hooked");
 
     tempSwapChain->Release();
     tempDevice->Release();
     tempContext->Release();
-    Log("hooks: temp objects released");
-
-    if (MH_EnableHook(MH_ALL_HOOKS) != MH_OK) {
-        Log("hooks: EnableHook FAILED");
-        return false;
-    }
-    Log("hooks: EnableHook OK, returning true");
+    Log("init: done");
     return true;
 }
 
 void Hooks::shutdown() {
-    MH_DisableHook(MH_ALL_HOOKS);
-    MH_RemoveHook(MH_ALL_HOOKS);
+    if (g_vtablePtr) {
+        void** vtable = *g_vtablePtr;
+        DWORD oldProtect;
+        VirtualProtect(&vtable[8], sizeof(void*), PAGE_READWRITE, &oldProtect);
+        vtable[8] = (void*)originalPresent;
+        VirtualProtect(&vtable[8], sizeof(void*), oldProtect, &oldProtect);
+
+        VirtualProtect(&vtable[13], sizeof(void*), PAGE_READWRITE, &oldProtect);
+        vtable[13] = (void*)originalResizeBuffers;
+        VirtualProtect(&vtable[13], sizeof(void*), oldProtect, &oldProtect);
+    }
 
     if (g_initialized) {
         ImGui_ImplDX11_Shutdown();
         ImGui_ImplWin32_Shutdown();
         ImGui::DestroyContext();
-
         if (g_originalWndProc && g_hWindow)
             SetWindowLongPtrA(g_hWindow, GWLP_WNDPROC, (LONG_PTR)g_originalWndProc);
-
         if (g_pContext) g_pContext->Release();
         if (g_pDevice) g_pDevice->Release();
     }
