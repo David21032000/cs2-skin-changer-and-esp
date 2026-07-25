@@ -72,6 +72,11 @@ HRESULT __stdcall ResizeBuffers_hook(IDXGISwapChain* pSwapChain, UINT BufferCoun
     }
     return originalResizeBuffers(pSwapChain, BufferCount, Width, Height, NewFormat, SwapChainFlags);
 }
+static void Log(const char* msg) {
+    FILE* f = fopen("camus_debug.txt", "a");
+    if (f) { fprintf(f, "%s\n", msg); fclose(f); }
+}
+
 bool Hooks::initialize() {
     DXGI_SWAP_CHAIN_DESC scd = {};
     scd.BufferCount = 1;
@@ -83,6 +88,7 @@ bool Hooks::initialize() {
     scd.SampleDesc.Count = 1;
     scd.Windowed = TRUE;
 
+    Log("hooks: creating D3D11 device...");
     IDXGISwapChain* tempSwapChain = nullptr;
     ID3D11Device* tempDevice = nullptr;
     ID3D11DeviceContext* tempContext = nullptr;
@@ -92,25 +98,37 @@ bool Hooks::initialize() {
         nullptr, 0, D3D11_SDK_VERSION, &scd,
         &tempSwapChain, &tempDevice, nullptr, &tempContext
     );
-    if (FAILED(hr) || !tempSwapChain || !tempDevice) return false;
+    if (FAILED(hr)) { Log("hooks: D3D11 FAILED"); return false; }
+    if (!tempSwapChain) { Log("hooks: no swapchain"); return false; }
+    Log("hooks: D3D11 OK");
 
     void** vtable = *(void***)tempSwapChain;
     void* presentTarget = vtable[8];
     void* resizeTarget = vtable[13];
+    Log("hooks: got vtable entries");
 
-    if (MH_CreateHook(presentTarget, (LPVOID)&Present_hook, (void**)&originalPresent) != MH_OK)
+    if (MH_CreateHook(presentTarget, (LPVOID)&Present_hook, (void**)&originalPresent) != MH_OK) {
+        Log("hooks: CreateHook Present FAILED");
         return false;
+    }
+    Log("hooks: hooked Present");
 
-    if (MH_CreateHook(resizeTarget, (LPVOID)&ResizeBuffers_hook, (void**)&originalResizeBuffers) != MH_OK)
+    if (MH_CreateHook(resizeTarget, (LPVOID)&ResizeBuffers_hook, (void**)&originalResizeBuffers) != MH_OK) {
+        Log("hooks: CreateHook Resize FAILED");
         return false;
+    }
+    Log("hooks: hooked Resize");
 
     tempSwapChain->Release();
     tempDevice->Release();
     tempContext->Release();
+    Log("hooks: temp objects released");
 
-    if (MH_EnableHook(MH_ALL_HOOKS) != MH_OK)
+    if (MH_EnableHook(MH_ALL_HOOKS) != MH_OK) {
+        Log("hooks: EnableHook FAILED");
         return false;
-
+    }
+    Log("hooks: EnableHook OK, returning true");
     return true;
 }
 

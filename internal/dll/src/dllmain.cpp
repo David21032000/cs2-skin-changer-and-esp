@@ -3,6 +3,11 @@
 #include <cstdio>
 #include <MinHook/MinHook.h>
 
+static void Log(const char* msg) {
+    FILE* f = fopen("camus_debug.txt", "a");
+    if (f) { fprintf(f, "%s\n", msg); fclose(f); }
+}
+
 namespace Hooks {
     bool initialize();
     void shutdown();
@@ -22,20 +27,28 @@ namespace Cheat {
 }
 
 DWORD WINAPI CheatThread(LPVOID lpParam) {
+    Log("step 1: AllocConsole...");
     Cheat::initialize();
+    Log("step 2: console done");
 
     Sleep(100);
 
+    Log("step 3: MH_Init...");
     if (MH_Initialize() != MH_OK) {
+        Log("step 3: MH_Init FAILED");
         Cheat::shutdown();
         return 1;
     }
+    Log("step 4: MH_Init OK");
 
+    Log("step 5: Hooks::init...");
     if (!Hooks::initialize()) {
+        Log("step 5: Hooks::init FAILED");
         MH_Uninitialize();
         Cheat::shutdown();
         return 1;
     }
+    Log("step 6: Hooks::init OK");
 
     MSG msg = { 0 };
     while (msg.message != WM_QUIT) {
