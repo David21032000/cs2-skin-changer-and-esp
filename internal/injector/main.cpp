@@ -239,7 +239,26 @@ int main(int argc, char* argv[]) {
         wait_and_exit(1);
     }
 
-    CloseHandle(hProcess);
     wprintf(L"[+] Injection completed successfully\n");
-    wait_and_exit(0);
+    wprintf(L"[+] Waiting for CS2 to exit (close the game to see debug log)...\n");
+
+    WaitForSingleObject(hProcess, INFINITE);
+    DWORD exitCode = 0;
+    GetExitCodeProcess(hProcess, &exitCode);
+
+    wprintf(L"\n[!] CS2 exited with code 0x%08lX", exitCode);
+
+    printf("\n\n=== camus_debug.txt ===\n");
+    FILE* f = fopen("camus_debug.txt", "r");
+    if (f) {
+        char buf[256];
+        while (fgets(buf, sizeof(buf), f)) printf("%s", buf);
+        fclose(f);
+    } else {
+        printf("(no debug file found)\n");
+    }
+    printf("========================\n");
+
+    CloseHandle(hProcess);
+    wait_and_exit(exitCode == 0 ? 0 : 1);
 }
