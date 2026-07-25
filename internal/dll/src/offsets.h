@@ -67,69 +67,89 @@ inline uintptr_t dwGameRules = 0;
 // ============================================================
 namespace NetVar {
     // C_BaseEntity
-    inline constexpr int m_iTeamNum            = 0x3BF;
-    inline constexpr int m_lifeState           = 0x3D0;
+    inline constexpr int m_iTeamNum            = 0x3E7;
+    inline constexpr int m_lifeState           = 0x354;
     inline constexpr int m_vecAbsOrigin        = 0x70;
-    inline constexpr int m_vecOrigin           = 0x130;
-    inline constexpr int m_flHealth            = 0x410;
-    inline constexpr int m_flMaxHealth         = 0x414;
-    inline constexpr int m_iHealth             = 0x414;
-    inline constexpr int m_iMaxHealth          = 0x418;
+    inline constexpr int m_vecOrigin           = 0x80; // CGameSceneNode::m_vecOrigin
+    inline constexpr int m_iHealth             = 0x34C;
+    inline constexpr int m_iMaxHealth          = 0x348;
+    inline constexpr int m_pGameSceneNode      = 0x330; // CGameSceneNode*
+    inline constexpr int m_fFlags              = 0x3F4;
+    inline constexpr int m_bDormant            = 0xED;
+    inline constexpr int m_vecVelocity         = 0x430;
+
+    // C_BaseModelEntity
+    inline constexpr int m_vecViewOffset       = 0xE78;
 
     // C_BasePlayerPawn
-    inline constexpr int m_hPlayerPawn         = 0x7EC;
-    inline constexpr int m_pWeaponServices     = 0xDF0;
-    inline constexpr int m_pInButtonState      = 0xDE8;
-    inline constexpr int m_aimPunchAngle       = 0x14C0;
-    inline constexpr int m_aimPunchAngleVel    = 0x14CC;
-    inline constexpr int m_bIsScoped           = 0x14A8;
-    inline constexpr int m_bIsDead             = 0x14A0;
-    inline constexpr int m_flFlashDuration     = 0x14D0;
-    inline constexpr int m_flFlashMaxAlpha     = 0x14D4;
-    inline constexpr int m_iCompRank           = 0x14E0;
-    inline constexpr int m_iPawnHealth         = 0x14F0;
-    inline constexpr int m_vecVelocity         = 0x150;
-    inline constexpr int m_vecViewOffset       = 0x170;
-    inline constexpr int m_flEyeHeight         = 0x174;
-    inline constexpr int m_bDormant            = 0xED;
-    inline constexpr int m_fFlags              = 0x3E8;
+    inline constexpr int m_pWeaponServices     = 0x1208;
+    inline constexpr int m_pItemServices       = 0x1210;
+    inline constexpr int m_hPlayerPawn         = 0x914; // CCSPlayerController
 
     // C_CSPlayerPawnBase
-    inline constexpr int m_iShotsFired         = 0x1410;
-    inline constexpr int m_bIsWalking          = 0x1418;
-    inline constexpr int m_flVelocityModifier  = 0x1420;
-    inline constexpr int m_fAccuracyPenalty    = 0x1430;
-    inline constexpr int m_bHasHelmet          = 0x1438;
-    inline constexpr int m_bHasHeavyArmor      = 0x1439;
-    inline constexpr int m_bHasDefuser         = 0x143A;
-    inline constexpr int m_bHasDefuseKit       = 0x143B;
-    inline constexpr int m_bGunGameImmunity    = 0x143C;
-    inline constexpr int m_nArmorValue         = 0x1440;
+    inline constexpr int m_flFlashDuration     = 0x1428;
+    inline constexpr int m_flFlashMaxAlpha     = 0x1424;
+    inline constexpr int m_flFlashOverlayAlpha = 0x141C;
+    inline constexpr int m_flFlashScreenshotAlpha = 0x1418;
 
-    // C_WeaponCSBase
-    inline constexpr int m_iClip1              = 0x1500;
-    inline constexpr int m_iClip2              = 0x1504;
-    inline constexpr int m_iPrimaryReserveAmmo = 0x1508;
-    inline constexpr int m_iSecondaryReserveAmmo = 0x150C;
-    inline constexpr int m_flNextPrimaryAttack = 0x1510;
-    inline constexpr int m_flNextSecondaryAttack = 0x1514;
-    inline constexpr int m_weaponMode          = 0x1518;
-    inline constexpr int m_iItemDefinitionIndex = 0x15A0;
-    inline constexpr int m_iEntityQuality      = 0x15A4;
-    inline constexpr int m_hOwner              = 0x15B0;
-    inline constexpr int m_iState              = 0x15C0;
-    inline constexpr int m_zoomLevel           = 0x15C8;
+    // C_CSPlayerPawn
+    inline constexpr int m_iShotsFired         = 0x1C84;
+    inline constexpr int m_bIsWalking          = 0x1C50;
+    inline constexpr int m_flVelocityModifier  = 0x1C8C;
+    inline constexpr int m_bIsScoped           = 0x1C70;
+    inline constexpr int m_bIsDefusing         = 0x1C72;
+    inline constexpr int m_bGunGameImmunity    = 0x3258;
+    inline constexpr int m_nArmorValue         = 0x1C9C;
+    inline constexpr int m_ArmorValue          = 0x1C9C;
+    inline constexpr int m_angEyeAngles        = 0x3340;
+    inline constexpr int m_iIDEntIndex         = 0x341C;
+    inline constexpr int m_aimPunchAngle       = 0x14C0;
+    inline constexpr int m_aimPunchAngleVel    = 0x14CC;
 
-    // C_WeaponCSBase (CS2 specific)
-    inline constexpr int m_flRecoilIndex       = 0x15D0;
-    inline constexpr int m_fLastShotTime       = 0x15D8;
-    inline constexpr int m_weaponData          = 0x15E0;
+    // CCSPlayer_ItemServices
+    inline constexpr int m_bHasDefuser         = 0x48;
+    inline constexpr int m_bHasHelmet          = 0x49;
+    inline constexpr int m_bHasHeavyArmor      = 0x4A;
 
-    // C_BaseAttributableItem
-    inline constexpr int m_iItemIDHigh         = 0x1610;
-    inline constexpr int m_iItemIDLow          = 0x1614;
-    inline constexpr int m_iAccountID          = 0x1618;
+    // CCSPlayerController
+    inline constexpr int m_iPawnHealth         = 0x920;
+    inline constexpr int m_iCompRank           = 0x888;
+    inline constexpr int m_bPawnIsAlive        = 0x91C;
+
+    // C_CSWeaponBase
+    inline constexpr int m_weaponMode          = 0x17D8;
+    inline constexpr int m_fAccuracyPenalty    = 0x17F0;
+    inline constexpr int m_flRecoilIndex       = 0x1800;
+    inline constexpr int m_iRecoilIndex        = 0x17FC;
+
+    // C_CSWeaponBaseGun
+    inline constexpr int m_zoomLevel           = 0x1CE0;
+
+    // C_BasePlayerWeapon
+    inline constexpr int m_iClip1              = 0x1700;
+    inline constexpr int m_iClip2              = 0x1704;
+    inline constexpr int m_pReserveAmmo        = 0x1708; // int32[2]
+    inline constexpr int m_iPrimaryReserveAmmo = 0x1708;
+    inline constexpr int m_iSecondaryReserveAmmo = 0x170C;
+
+    // C_EconItemView (in C_AttributeContainer::m_Item)
+    inline constexpr int m_iItemDefinitionIndex = 0x1BA;
+    inline constexpr int m_iEntityQuality      = 0x1BC;
+    inline constexpr int m_iItemIDHigh         = 0x1D0;
+    inline constexpr int m_iItemIDLow          = 0x1D4;
+    inline constexpr int m_iAccountID          = 0x1D8;
     inline constexpr int m_szCustomName        = 0x1620;
+
+    // C_BasePlayerWeapon
+    inline constexpr int m_flNextPrimaryAttack = 0x16F4; // m_flNextPrimaryAttackTickRatio
+    inline constexpr int m_flNextSecondaryAttack = 0x16FC; // m_flNextSecondaryAttackTickRatio
+
+    // C_BaseEntity / misc
+    inline constexpr int m_pInButtonState      = 0xDE8;
+    inline constexpr int m_bIsDead             = 0x14A0;
+    inline constexpr int m_flEyeHeight         = 0x174;
+    inline constexpr int m_flHealth            = 0x34C;
+    inline constexpr int m_flMaxHealth         = 0x348;
 
     // Entity list related
     inline constexpr int m_iEntityHandleOffset = 0x10;
@@ -144,6 +164,12 @@ namespace NetVar {
     // View model
     inline constexpr int m_hViewModel          = 0x7E8;
     inline constexpr int m_dwViewAngles        = 0x14A0;
+
+    // Misc weapon
+    inline constexpr int m_hOwner              = 0x15B0;
+    inline constexpr int m_iState              = 0x15C0;
+    inline constexpr int m_fLastShotTime       = 0x1928;
+    inline constexpr int m_weaponData          = 0x15E0;
 }
 
 // ============================================================
