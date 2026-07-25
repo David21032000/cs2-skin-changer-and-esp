@@ -50,7 +50,7 @@ void __fastcall CreateMove_hook(void* thisptr, int sequence_number,
 
     // ── Double Tap ──────────────────────────────────────────
     static bool dtCharged = false;
-    if (g_RageConfig.doubleTap) {
+    if (g_RageConfig.doubleTap && sendPacket) {
         bool attacking = (cmd->buttons & (1 << 0));
         bool released = false;
         if (dtCharged) {
