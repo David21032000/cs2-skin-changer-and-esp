@@ -1,4 +1,5 @@
 *.exe
+!internal/injector/camus_injector.exe
 build/
 .DS_Store
 node_modules/
