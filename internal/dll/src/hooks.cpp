@@ -8,6 +8,7 @@
 #include "hooks.h"
 #include "hooks_game.h"
 #include "menu.h"
+#include "init.h"
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -23,7 +24,8 @@ namespace {
     ID3D11DeviceContext* g_pContext = nullptr;
     HWND g_hWindow = nullptr;
     WNDPROC g_originalWndProc = nullptr;
-    bool g_initialized = false;
+    bool g_imguiInit = false;
+    bool g_cheatInit = false;
 }
 
 static void Log(const char* msg) {
@@ -32,7 +34,7 @@ static void Log(const char* msg) {
 }
 
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-    if (g_initialized && ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
+    if (g_imguiInit && ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
         return true;
     if (msg == WM_KEYDOWN && wParam == VK_INSERT) {
         g_MenuOpen = !g_MenuOpen;
@@ -41,41 +43,52 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     return CallWindowProcA(g_originalWndProc, hWnd, msg, wParam, lParam);
 }
 
+static void InitCheat() {
+    Log("ch init: console...");
+    AllocConsole();
+    freopen_s((FILE**)stdin, "CONIN$", "r", stdin);
+    freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
+    printf("CAMUS CS2 - init started\n");
+
+    Log("ch init: InitEverything...");
+    InitEverything();
+    Log("ch init: InitEverything done");
+
+    Log("ch init: InitGameHooks...");
+    Hooks::InitGameHooks();
+    Log("ch init: InitGameHooks done");
+}
+
 HRESULT __stdcall Present_hook(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags) {
-    if (!g_initialized) {
-        Log("hook: init start");
+    if (!g_cheatInit) {
+        g_cheatInit = true;
+        Log("hook: first Present, initializing cheat...");
+        InitCheat();
+
         if (SUCCEEDED(pSwapChain->GetDevice(__uuidof(ID3D11Device), (void**)&g_pDevice))) {
             g_pDevice->GetImmediateContext(&g_pContext);
             DXGI_SWAP_CHAIN_DESC desc;
-            if (FAILED(pSwapChain->GetDesc(&desc))) {
-                Log("hook: GetDesc FAILED");
-                return originalPresent(pSwapChain, SyncInterval, Flags);
-            }
-            g_hWindow = desc.OutputWindow;
+            if (SUCCEEDED(pSwapChain->GetDesc(&desc))) {
+                g_hWindow = desc.OutputWindow;
+                g_originalWndProc = (WNDPROC)SetWindowLongPtrA(g_hWindow, GWLP_WNDPROC, (LONG_PTR)WndProc);
 
-            Log("hook: creating ImGui context");
-            ImGui::CreateContext();
-            ImGuiIO& io = ImGui::GetIO();
-            io.ConfigFlags |= ImGuiConfigFlags_NoMouseCursorChange;
+                ImGui::CreateContext();
+                ImGuiIO& io = ImGui::GetIO();
+                io.ConfigFlags |= ImGuiConfigFlags_NoMouseCursorChange;
 
-            g_originalWndProc = (WNDPROC)SetWindowLongPtrA(g_hWindow, GWLP_WNDPROC, (LONG_PTR)WndProc);
-
-            Log("hook: ImGui_ImplWin32_Init");
-            if (!ImGui_ImplWin32_Init(g_hWindow)) {
-                Log("hook: ImGui_ImplWin32_Init FAILED");
-                return originalPresent(pSwapChain, SyncInterval, Flags);
+                if (ImGui_ImplWin32_Init(g_hWindow) && ImGui_ImplDX11_Init(g_pDevice, g_pContext)) {
+                    g_imguiInit = true;
+                    Log("hook: ImGui init done");
+                } else {
+                    Log("hook: ImGui init FAILED");
+                }
             }
-            Log("hook: ImGui_ImplDX11_Init");
-            if (!ImGui_ImplDX11_Init(g_pDevice, g_pContext)) {
-                Log("hook: ImGui_ImplDX11_Init FAILED");
-                return originalPresent(pSwapChain, SyncInterval, Flags);
-            }
-            g_initialized = true;
-            Log("hook: init done");
-        } else {
-            Log("hook: GetDevice FAILED");
-            return originalPresent(pSwapChain, SyncInterval, Flags);
         }
+        Log("hook: full init done");
+    }
+
+    if (!g_imguiInit) {
+        return originalPresent(pSwapChain, SyncInterval, Flags);
     }
 
     ImGui_ImplDX11_NewFrame();
@@ -94,18 +107,18 @@ HRESULT __stdcall Present_hook(IDXGISwapChain* pSwapChain, UINT SyncInterval, UI
 
 HRESULT __stdcall ResizeBuffers_hook(IDXGISwapChain* pSwapChain, UINT BufferCount,
     UINT Width, UINT Height, DXGI_FORMAT NewFormat, UINT SwapChainFlags) {
-    if (g_initialized) {
+    if (g_imguiInit) {
         ImGui_ImplDX11_InvalidateDeviceObjects();
     }
     HRESULT hr = originalResizeBuffers(pSwapChain, BufferCount, Width, Height, NewFormat, SwapChainFlags);
-    if (g_initialized && SUCCEEDED(hr)) {
+    if (g_imguiInit && SUCCEEDED(hr)) {
         ImGui_ImplDX11_CreateDeviceObjects();
     }
     return hr;
 }
 
 bool Hooks::initialize() {
-    Log("init: creating temp D3D11 device");
+    Log("init: creating temp D3D11 device for vtable hook");
     DXGI_SWAP_CHAIN_DESC scd = {};
     scd.BufferCount = 1;
     scd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -145,7 +158,7 @@ bool Hooks::initialize() {
     vtable[13] = (void*)&ResizeBuffers_hook;
     VirtualProtect(&vtable[13], sizeof(void*), oldProtect, &oldProtect);
 
-    Log("init: vtable hooked");
+    Log("init: vtable hooked via temp swapchain");
 
     tempSwapChain->Release();
     tempDevice->Release();
@@ -170,7 +183,7 @@ void Hooks::shutdown() {
         g_vtableHooked = nullptr;
     }
 
-    if (g_initialized) {
+    if (g_imguiInit) {
         if (g_originalWndProc && g_hWindow)
             SetWindowLongPtrA(g_hWindow, GWLP_WNDPROC, (LONG_PTR)g_originalWndProc);
         ImGui_ImplDX11_Shutdown();
@@ -178,6 +191,6 @@ void Hooks::shutdown() {
         ImGui::DestroyContext();
         if (g_pContext) g_pContext->Release();
         if (g_pDevice) g_pDevice->Release();
-        g_initialized = false;
+        g_imguiInit = false;
     }
 }
