@@ -1,0 +1,24 @@
+CREATE DATABASE IF NOT EXISTS camus_db
+    CHARACTER SET utf8mb4
+    COLLATE utf8mb4_unicode_ci;
+
+USE camus_db;
+
+CREATE TABLE IF NOT EXISTS keys (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    key_code VARCHAR(64) UNIQUE NOT NULL,
+    hwid VARCHAR(128) DEFAULT NULL,
+    days INT NOT NULL DEFAULT 30,
+    expires_at DATETIME DEFAULT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    last_login DATETIME DEFAULT NULL,
+    active BOOLEAN DEFAULT TRUE,
+    INDEX idx_key (key_code),
+    INDEX idx_hwid (hwid)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS admins (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(64) UNIQUE NOT NULL,
+    password_hash VARCHAR(256) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

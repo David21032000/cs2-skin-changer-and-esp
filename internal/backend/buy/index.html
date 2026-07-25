@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camus CS2 Cheat - Premium Internal Cheat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #050508;
+            --bg-elevated: #0a0a12;
+            --fg: #f0f0f5;
+            --muted: #6b6b7b;
+            --accent: #00ffc8;
+            --accent-dim: rgba(0, 255, 200, 0.15);
+            --accent-glow: rgba(0, 255, 200, 0.4);
+            --pink: #ff2a6d;
+            --pink-glow: rgba(255, 42, 109, 0.4);
+            --card: #0e0e16;
+            --border: #1a1a2e;
+        }
+        
+        * { box-sizing: border-box; }
+        
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+        
+        html { scroll-behavior: smooth; }
+        
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg);
+            color: var(--fg);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        
+        /* Animated background */
+        .bg-grid {
+            position: fixed;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(0, 255, 200, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 200, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            animation: gridMove 20s linear infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(60px, 60px); }
+        }
+        
+        .glow-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .orb-1 {
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+            top: -100px; right: -100px;
+            animation: float1 8s ease-in-out infinite;
+        }
+        
+        .orb-2 {
+            width: 300px; height: 300px;
+            background: radial-gradient(circle, var(--pink-glow) 0%, transparent 70%);
+            bottom: 20%; left: 10%;
+            animation: float2 10s ease-in-out infinite;
+        }
+        
+        @keyframes float1 {
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.4; }
+            50% { transform: translate(-50px, 50px) scale(1.1); opacity: 0.6; }
+        }
+        
+        @keyframes float2 {
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.3; }
+            50% { transform: translate(30px, -30px) scale(1.15); opacity: 0.5; }
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--pink); }
+        
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            background: rgba(5, 5, 8, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .nav-link {
+            color: var(--muted);
+            transition: color 0.2s ease, text-shadow 0.2s ease;
+            position: relative;
+        }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -4px; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent), var(--pink));
+            transform: scaleX(0);
+            transform-origin: right;
+            transition: transform 0.3s ease;
+        }
+        
+        .nav-link:hover {
+            color: var(--accent);
+            text-shadow: 0 0 20px var(--accent-glow);
+        }
+        
+        .nav-link:hover::after {
+            transform: scaleX(1);
+            transform-origin: left;
+        }
+        
+        /* Hero */
+        .hero-title {
+            font-size: clamp(2.5rem, 8vw, 6rem);
+            font-weight: 700;
+            line-height: 1.05;
+            letter-spacing: -0.03em;
+            background: linear-gradient(135deg, var(--fg) 0%, var(--accent) 50%, var(--pink) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .hero-subtitle {
+            font-size: clamp(1rem, 2.5vw, 1.375rem);
+            color: var(--muted);
+            max-width: 60ch;
+            line-height: 1.7;
+        }
+        
+        /* Buttons */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent) 0%, #00d4a8 100%);
+            color: var(--bg);
+            font-weight: 600;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 24px var(--accent-glow);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, var(--pink) 0%, var(--accent) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px var(--accent-glow), 0 0 0 1px var(--accent);
+        }
+        
+        .btn-primary:hover::before { opacity: 1; }
+        .btn-primary:active { transform: translateY(0); }
+        
+        .btn-primary span { position: relative; z-index: 1; }
+        
+        .btn-secondary {
+            background: transparent;
+            color: var(--fg);
+            font-weight: 500;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-secondary:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            box-shadow: 0 0 24px var(--accent-dim);
+        }
+        
+        /* Cards */
+        .feature-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--pink));
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            border-color: var(--accent);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4), 0 0 0 1px var(--accent);
+            transform: translateY(-4px);
+        }
+        
+        .feature-card:hover::before { transform: scaleX(1); }
+        
+        /* Pricing cards */
+        .pricing-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 2.5rem;
+            position: relative;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .pricing-card.featured {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 1px var(--accent), 0 24px 64px rgba(0, 255, 200, 0.1);
+        }
+        
+        .pricing-card.featured::before {
+            content: 'MOST POPULAR';
+            position: absolute;
+            top: -12px; left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, var(--accent), var(--pink));
+            color: var(--bg);
+            font-size: 0.625rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            padding: 0.25rem 1rem;
+            border-radius: 9999px;
+        }
+        
+        .pricing-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--accent);
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--accent);
+        }
+        
+        .price {
+            font-size: 3.5rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            background: linear-gradient(135deg, var(--fg), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .price-period { color: var(--muted); font-size: 1rem; font-weight: 400; font-family: inherit; }
+        
+        .feature-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border);
+            color: var(--muted);
+            transition: color 0.2s ease;
+        }
+        
+        .feature-list li:last-child { border-bottom: none; }
+        
+        .feature-list li:hover { color: var(--fg); }
+        
+        .feature-list .check {
+            color: var(--accent);
+            flex-shrink: 0;
+            margin-top: 0.125rem;
+        }
+        
+        /* Feature icons */
+        .icon-wrapper {
+            width: 48px; height: 48px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--accent-dim), rgba(255, 42, 109, 0.1));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        /* Stripe-style checkout button */
+        .stripe-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #635bff 0%, #7c3aed 100%);
+            color: white;
+            font-weight: 600;
+            padding: 1rem;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: auto;
+        }
+        
+        .stripe-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(99, 91, 255, 0.4);
+        }
+        
+        .featured .stripe-btn {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--pink) 100%);
+            color: var(--bg);
+        }
+        
+        .featured .stripe-btn:hover {
+            box-shadow: 0 12px 32px var(--accent-glow);
+        }
+        
+        /* Features section */
+        .feature-item {
+            display: flex;
+            gap: 1.5rem;
+            padding: 1.5rem;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            transition: all 0.2s ease;
+        }
+        
+        .feature-item:hover {
+            border-color: var(--accent);
+            background: var(--bg-elevated);
+        }
+        
+        .feature-number {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent);
+            opacity: 0.3;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+        
+        /* FAQ */
+        .faq-item {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .faq-question {
+            width: 100%;
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: transparent;
+            border: none;
+            color: var(--fg);
+            font-size: 1.125rem;
+            font-weight: 500;
+            text-align: left;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        
+        .faq-question:hover { color: var(--accent); }
+        
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        
+        .faq-answer.open { max-height: 500px; }
+        
+        .faq-answer p {
+            padding: 0 1.5rem 1.5rem;
+            color: var(--muted);
+            line-height: 1.7;
+        }
+        
+        .faq-icon {
+            transition: transform 0.2s ease;
+            color: var(--accent);
+        }
+        
+        .faq-question[aria-expanded="true"] .faq-icon {
+            transform: rotate(180deg);
+        }
+        
+        /* Footer */
+        footer {
+            border-top: 1px solid var(--border);
+            background: var(--bg-elevated);
+        }
+        
+        /* Animations */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .animate-fade-up {
+            animation: fadeUp 0.8s ease-out forwards;
+            opacity: 0;
+        }
+        
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        .delay-4 { animation-delay: 0.4s; }
+        
+        /* Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            .animate-fade-up {
+                animation: none;
+                opacity: 1;
+            }
+            .glow-orb { animation: none; }
+            .bg-grid { animation: none; }
+        }
+        
+        /* Focus visible */
+        *:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+        
+        /* Mobile menu toggles */
+        .theme-toggle {
+            width: 44px; height: 44px;
+            border-radius: 12px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .theme-toggle:hover {
+            border-color: var(--accent);
+            background: var(--bg-elevated);
+        }
+    </style>
+</head>
+<body>
+    <!-- Background -->
+    <div class="bg-grid" aria-hidden="true"></div>
+    <div class="glow-orb orb-1" aria-hidden="true"></div>
+    <div class="glow-orb orb-2" aria-hidden="true"></div>
+    
+    <!-- Navigation -->
+    <nav>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <a href="#" class="flex items-center gap-2" aria-label="Camus CS2 Cheat Home">
+                    <span class="font-mono font-bold text-xl" style="color: var(--accent);">CAMUS</span>
+                    <span class="text-xs uppercase tracking-widest text-[var(--muted)]">CS2 CHEAT</span>
+                </a>
+                
+                <div class="hidden md:flex items-center gap-8">
+                    <a href="#features" class="nav-link text-sm font-medium">Features</a>
+                    <a href="#pricing" class="nav-link text-sm font-medium">Pricing</a>
+                    <a href="#faq" class="nav-link text-sm font-medium">FAQ</a>
+                </div>
+                
+                <div class="flex items-center gap-3">
+                    <a href="#pricing" class="btn-primary text-sm px-4 py-2 hidden sm:inline-flex">
+                        <span>Purchase</span>
+                    </a>
+                    <button class="theme-toggle" aria-label="Toggle theme" onclick="toggleTheme()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="sun-icon">
+                            <circle cx="12" cy="12" r="5"></circle>
+                            <line x1="12" y1="1" x2="12" y2="3"></line>
+                            <line x1="12" y1="21" x2="12" y2="23"></line>
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                            <line x1="1" y1="12" x2="3" y2="12"></line>
+                            <line x1="21" y1="12" x2="23" y2="12"></line>
+                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                        </svg>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="moon-icon hidden">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Hero Section -->
+    <section class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center max-w-4xl mx-auto">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-8 animate-fade-up"
+                     style="background: var(--accent-dim); border: 1px solid var(--accent);">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--accent)] opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-[var(--accent)]"></span>
+                    </span>
+                    <span class="text-sm font-medium" style="color: var(--accent);">v2.4.1 Released — July 2025</span>
+                </div>
+                
+                <h1 class="hero-title animate-fade-up delay-1 mb-6">
+                    The Internal CS2 Cheat
+                    <br><span style="color: var(--accent);">That Actually Works</span>
+                </h1>
+                
+                <p class="hero-subtitle animate-fade-up delay-2 mb-10 mx-auto max-w-2xl">
+                    Rage aimbot, legit assist, anti-aim, ESP, chams, movement — all internal, all undetected. 
+                    Built for HVH and legit play. No external overlays, no compromises.
+                </p>
+                
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-up delay-3">
+                    <a href="#pricing" class="btn-primary w-full sm:w-auto">
+                        <span>Get Access Now</span>
+                    </a>
+                    <a href="#features" class="btn-secondary w-full sm:w-auto">
+                        View Features
+                    </a>
+                </div>
+                
+                <!-- Trust indicators -->
+                <div class="flex flex-wrap items-center justify-center gap-6 mt-12 animate-fade-up delay-4"
+                     style="color: var(--muted); font-size: 0.875rem;">
+                    <div class="flex items-center gap-2">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                        <span>Undetected Since Release</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        <span>Auto-Updated Offsets</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                        </svg>
+                        <span>Instant Delivery</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="3" width="20" height="14" rx="2"></rect>
+                            <line x1="8" y1="21" x2="16" y2="21"></line>
+                            <line x1="12" y1="17" x2="12" y2="21"></line>
+                        </svg>
+                        <span>24/7 Support</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Features Section -->
+    <section id="features" class="py-20 lg:py-32 px-4 sm:px-6 lg:px-8" style="background: linear-gradient(180deg, var(--bg) 0%, var(--bg-elevated) 100%);">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <span class="font-mono text-sm" style="color: var(--accent);">FEATURES</span>
+                <h2 class="mt-2 text-3xl lg:text-4xl font-bold">Everything You Need to Dominate</h2>
+                <p class="mt-4 max-w-2xl mx-auto" style="color: var(--muted);">
+                    Every feature is internal — no external overlays, no screen capture, no compromises.
+                </p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Rage Aimbot -->
+                <article class="feature-card animate-fade-up delay-1">
+                    <div class="icon-wrapper mb-4">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M12 2v20M2 12h20"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Rage Aimbot</h3>
+                    <p style="color: var(--muted); line-height: 1.7; margin-bottom: 1.5rem;">
+                        Silent aim with hitchance, multipoint, auto-scope, resolver integration. 
+                        Hitscan & projectile support. No spread, no recoil.
+                    </p>
+                    <ul class="space-y-1.5" style="color: var(--muted); font-size: 0.875rem;">
+                        <li>• Silent aim / pSilent</li>
+                        <li>• Hitchance & min damage</li>
+                        <li>• Multipoint hitbox scaling</li>
+                        <li>• Auto-stop / auto-scope</li>
+                        <li>• Resolver + backtrack (12 tick)</li>
+                    </ul>
+                </article>
+                
+                <!-- Legit Aimbot -->
+                <article class="feature-card animate-fade-up delay-2">
+                    <div class="icon-wrapper mb-4">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Legit Aimbot</h3>
+                    <p style="color: var(--muted); line-height: 1.7; margin-bottom: 1.5rem;">
+                        Humanized smoothing, RCS, triggerbot, aim-lock. Configurable per weapon. 
+                        Looks completely natural on demo.
+                    </p>
+                    <ul class="space-y-1.5" style="color: var(--muted); font-size: 0.875rem;">
+                        <li>• Smoothing + randomization</li>
+                        <li>• Standalone RCS</li>
+                        <li>• Triggerbot with delay</li>
+                        <li>• Per-weapon configs</li>
+                        <li>• FOV & hitbox selection</li>
+                    </ul>
+                </article>
+                
+                <!-- Anti-Aim -->
+                <article class="feature-card animate-fade-up delay-3">
+                    <div class="icon-wrapper mb-4">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Anti-Aim</h3>
+                    <p style="color: var(--muted); line-height: 1.7; margin-bottom: 1.5rem;">
+                        Full pitch/yaw control, desync up to 58°, fake lag, LBY breaker. 
+                        Per-state overrides (stand, move, air, crouch).
+                    </p>
+                    <ul class="space-y-1.5" style="color: var(--muted); font-size: 0.875rem;">
+                        <li>• Pitch: Emotion, Up, Down, Zero</li>
+                        <li>• Yaw: Spin, Jitter, Back, Lisp, Side</li>
+                        <li>• Desync with manual inversion</li>
+                        <li>• Fake lag (1-16 choke)</li>
+                        <li>• Freestanding / edge detection</li>
+                    </ul>
+                </article>
+                
+                <!-- Visuals -->
+                <article class="feature-card animate-fade-up delay-1">
+                    <div class="icon-wrapper mb-4">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                            <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Visuals (ESP + Chams + Glow)</h3>
+                    <p style="color: var(--muted); line-height: 1.7; margin-bottom: 1.5rem;">
+                        Box, health, armor, name, weapon, snaplines, distance. 
+                        Flat/metallic/wireframe chams. Custom glow outlines. World modulation.
+                    </p>
+                    <ul class="space-y-1.5" style="color: var(--muted); font-size: 0.875rem;">
+                        <li>• Box ESP (2D/3D)</li>
+                        <li>• Health/armor bars + gradient</li>
+                        <li>• Chams: Flat / Metallic / Wireframe</li>
+                        <li>• Glow with customizable color</li>
+                        <li>• Night mode / skybox changer</li>
+                    </ul>
+                </article>
+                
+                <!-- Movement -->
+                <article class="feature-card animate-fade-up delay-2">
+                    <div class="icon-wrapper mb-4">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Movement</h3>
+                    <p style="color: var(--muted); line-height: 1.7; margin-bottom: 1.5rem;">
+                        Bhop, auto-strafe, edge jump, quick stop, slide walk. 
+                        Perfect for kz/timer servers and competitive movement.
+                    </p>
+                    <ul class="space-y-1.5" style="color: var(--muted); font-size: 0.875rem;">
+                        <li>• Auto-bhop with hitchance</li>
+                        <li>• Air strafe (directional)</li>
+                        <li>• Edge jump / edge bug</li>
+                        <li>• Quick stop / counter-strafe</li>
+                        <li>• Crouch bhop / slide walk</li>
+                    </ul>
+                </article>
+                
+                <!-- Misc -->
+                <article class="feature-card animate-fade-up delay-3">
+                    <div class="icon-wrapper mb-4">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                            <rect x="2" y="3" width="20" height="14" rx="2"></rect>
+                            <line x1="8" y1="21" x2="16" y2="21"></line>
+                            <line x1="12" y1="17" x2="12" y2="21"></line>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Misc & Utility</h3>
+                    <p style="color: var(--muted); line-height: 1.7; margin-bottom: 1.5rem;">
+                        Third-person, radar, hitmarker, spectator list, watermark, 
+                        config system, clan tag, buy bot, auto-accept.
+                    </p>
+                    <ul class="space-y-1.5" style="color: var(--muted); font-size: 0.875rem;">
+                        <li>• Third person with distance</li>
+                        <li>• Radar hack / spectator list</li>
+                        <li>• Hitmarker + sound</li>
+                        <li>• Config save/load (JSON)</li>
+                        <li>• Clantag spammer / buy bot</li>
+                    </ul>
+                </article>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Pricing Section -->
+    <section id="pricing" class="py-20 lg:py-32 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <span class="font-mono text-sm" style="color: var(--accent);">PRICING</span>
+                <h2 class="mt-2 text-3xl lg:text-4xl font-bold">Simple, Transparent Pricing</h2>
+                <p class="mt-4 max-w-2xl mx-auto" style="color: var(--muted);">
+                    All plans include full feature access, instant delivery, and HWID lock.
+                </p>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+                <!-- 1 Month -->
+                <article class="pricing-card animate-fade-up delay-1">
+                    <div class="mb-6">
+                        <span class="font-mono text-sm uppercase tracking-wide" style="color: var(--accent);">Monthly</span>
+                        <div class="mt-2 flex items-baseline gap-1">
+                            <span class="price">$15</span>
+                            <span class="price-period">/month</span>
+                        </div>
+                    </div>
+                    
+                    <ul class="feature-list mb-6">
+                        <li><svg class="check" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Full feature access</li>
+                        <li><svg class="check" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> HWID lock (1 PC)</li>
+                        <li><svg class="check" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Instant delivery</li>
+                        <li><svg class="check" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Config system</li>
+                        <li><svg class="check" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> 24/7 ticket support</li>
+                        <li><svg class="check" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Auto offset updates</li>
+                    </ul>
+                    
+                    <button class="stripe-btn" onclick="openCheckout('monthly')">
+                        Get 1 Month — $15
+                    </button>
+                </article>
+                
+                <!-- 3 Months (Featured) -->
+                <article class="pricing-card featured animate-fade-up delay-2">
+                    <div class="mb-6">
+                        <span class="font-mono text-sm uppercase tracking-wide" style="color: var(--accent);">Quarterly</span>
+                        <div class="mt-2 flex items-baseline gap-1">
+                            <span class="price">$35</span>
+                            <span class="price-period">/3 months</span>
+                        </div>
+                        <p class="mt-1 text-sm" style="color: var(--accent);">Save $10 — Best Value</p>
+                    </div>
+                    
+                    <ul class="feature-list mb-6">
+                        <li><svg class="check" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Full feature access</li>
+                        <li><svg class="check" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> HWID lock (1 PC)</li>
+                        <li><svg class="check" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Instant delivery</li>
+                        <li><svg class="check" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Config system</li>
+                        <li><svg class="check" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Priority support</li>
+                        <li><svg class="check" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Auto offset updates</li>
+                    </ul>
+                    
+                    <button class="stripe-btn" onclick="openCheckout('quarterly')">
+                        Get 3 Months — $35
+                    </button>
+                </article>
+                
+                <!-- Lifetime -->
+                <article class="pricing-card animate-fade-up delay-3">
+                    <div class="mb-6">
+                        <span class="font-mono text-sm uppercase tracking-wide" style="color: var(--pink);">Lifetime</span>
+                        <div class="mt-2 flex items-baseline gap-1">
+                            <span class="price">$100</span>
+                            <span class="price-period">/forever</span>
+                        </div>
+                        <p class="mt-1 text-sm" style="color: var(--muted);">One-time payment</p>
+                    </div>
+                    
+                    <ul class="feature-list mb-6">
+                        <li><svg class="check" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Full feature access</li>
+                        <li><svg class="check" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> HWID lock (1 PC)</li>
+                        <li><svg class="check" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Instant delivery</li>
+                        <li><svg class="check" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Config system</li>
+                        <li><svg class="check" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Lifetime support</li>
+                        <li><svg class="check" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> All future updates</li>
+                    </ul>
+                    
+                    <button class="stripe-btn" onclick="openCheckout('lifetime')">
+                        Get Lifetime — $100
+                    </button>
+                </article>
+            </div>
+            
+            <!-- Payment methods -->
+            <div class="mt-16 text-center">
+                <p class="text-sm mb-4" style="color: var(--muted);">Secure payment via</p>
+                <div class="flex items-center justify-center gap-4" style="opacity: 0.6;">
+                    <svg width="48" height="30" viewBox="0 0 160 100" fill="currentColor">
+                        <path d="M0 0h160v100H0z"/>
+                        <text x="80" y="65" text-anchor="middle" font-size="24" font-weight="bold" fill="white">Stripe</text>
+                    </svg>
+                    <svg width="48" height="30" viewBox="0 0 160 100" fill="currentColor">
+                        <text x="80" y="65" text-anchor="middle" font-size="18" font-weight="bold" fill="white">Crypto</text>
+                    </svg>
+                    <svg width="48" height="30" viewBox="0 0 160 100" fill="currentColor">
+                        <text x="80" y="65" text-anchor="middle" font-size="16" font-weight="bold" fill="white">Card</text>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- FAQ Section -->
+    <section id="faq" class="py-20 lg:py-32 px-4 sm:px-6 lg:px-8" style="background: var(--bg-elevated);">
+        <div class="max-w-3xl mx-auto">
+            <div class="text-center mb-12">
+                <span class="font-mono text-sm" style="color: var(--accent);">FAQ</span>
+                <h2 class="mt-2 text-3xl lg:text-4xl font-bold">Frequently Asked Questions</h2>
+            </div>
+            
+            <div class="space-y-4">
+                <article class="faq-item animate-fade-up delay-1">
+                    <button class="faq-question" aria-expanded="false" onclick="toggleFaq(this)">
+                        How does the HWID system work?
+                        <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="faq-answer">
+                        <p>On first injection, your hardware ID (drive serial + MAC addresses) is bound to your key. 
+                        You can only use the cheat on that PC. HWID reset is available via support ticket (once per month).</p>
+                    </div>
+                </article>
+                
+                <article class="faq-item animate-fade-up delay-2">
+                    <button class="faq-question" aria-expanded="false" onclick="toggleFaq(this)">
+                        Is this detected by VAC / Vanguard?
+                        <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="faq-answer">
+                        <p>CS2 uses VAC Live (no kernel driver). Our internal cheat uses manual mapping injection, 
+                        randomized module names, and no suspicious imports. No public detections since release. 
+                        Rage features carry inherent risk — use at your own discretion.</p>
+                    </div>
+                </article>
+                
+                <article class="faq-item animate-fade-up delay-3">
+                    <button class="faq-question" aria-expanded="false" onclick="toggleFaq(this)">
+                        How do I receive my key after purchase?
+                        <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Instantly. After Stripe checkout completes, you're redirected to a success page with your 32-character key. 
+                        It's also emailed to you. Copy it into the cheat's auth prompt on first launch.</p>
+                    </div>
+                </article>
+                
+                <article class="faq-item animate-fade-up delay-4">
+                    <button class="faq-question" aria-expanded="false" onclick="toggleFaq(this)">
+                        Does it work on the latest CS2 update?
+                        <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Yes. Offsets are updated automatically via our pattern scanner on each CS2 patch. 
+                        The cheat validates offsets on startup and self-updates signatures. 
+                        If a major update breaks something, a hotfix is pushed within hours.</p>
+                    </div>
+                </article>
+                
+                <article class="faq-item animate-fade-up delay-1">
+                    <button class="faq-question" aria-expanded="false" onclick="toggleFaq(this)">
+                        Can I use this on Faceit / ESEA?
+                        <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Faceit/ESEA use kernel-level anti-cheat. This cheat is designed for VAC (official matchmaking, 
+                        community servers, HVH). Using it on kernel AC will result in a ban. We do not support 
+                        and will not add kernel bypasses.</p>
+                    </div>
+                </article>
+                
+                <article class="faq-item animate-fade-up delay-2">
+                    <button class="faq-question" aria-expanded="false" onclick="toggleFaq(this)">
+                        What's the difference between Rage and Legit?
+                        <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="faq-answer">
+                        <p><strong>Rage:</strong> Silent aim, no smoothing, 100% hit chance — for HVH and obvious play. 
+                        <strong>Legit:</strong> Smoothing, FOV limits, RCS, triggerbot — looks human on demos and overwatch. 
+                        Both run simultaneously; toggle per key.</p>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+    
+    <!-- CTA Section -->
+    <section class="py-20 lg:py-32 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-3xl mx-auto text-center">
+            <div style="background: linear-gradient(135deg, var(--card) 0%, var(--bg-elevated) 100%); 
+                        border: 1px solid var(--border); border-radius: 24px; padding: 3rem 2rem;">
+                <h2 class="text-3xl lg:text-4xl font-bold mb-4">
+                    Ready to Play Different?
+                </h2>
+                <p class="mb-8 max-w-lg mx-auto" style="color: var(--muted); font-size: 1.125rem; line-height: 1.7;">
+                    Join hundreds of players dominating with Camus. Instant access, full features, no compromises.
+                </p>
+                <a href="#pricing" class="btn-primary inline-flex">
+                    <span>Get Started — $15/mo</span>
+                </a>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer class="py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="flex items-center gap-2">
+                    <span class="font-mono font-bold text-xl" style="color: var(--accent);">CAMUS</span>
+                    <span class="text-xs uppercase tracking-widest" style="color: var(--muted);">CS2 CHEAT</span>
+                </div>
+                
+                <div class="flex items-center gap-6 text-sm" style="color: var(--muted);">
+                    <a href="#" class="hover:text-[var(--accent)] transition-colors">Terms</a>
+                    <a href="#" class="hover:text-[var(--accent)] transition-colors">Privacy</a>
+                    <a href="#" class="hover:text-[var(--accent)] transition-colors">Support</a>
+                    <a href="#" class="hover:text-[var(--accent)] transition-colors">Discord</a>
+                </div>
+                
+                <p class="text-sm" style="color: var(--muted);">
+                    © 2025 Camus CS2 Cheat. Not affiliated with Valve Corporation.
+                </p>
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        // FAQ toggle
+        function toggleFaq(btn) {
+            const answer = btn.nextElementSibling;
+            const expanded = btn.getAttribute('aria-expanded') === 'true';
+            btn.setAttribute('aria-expanded', !expanded);
+            answer.classList.toggle('open');
+        }
+        
+        // Theme toggle (placeholder for future dark/light)
+        function toggleTheme() {
+            // Could implement light mode here
+            console.log('Theme toggle clicked');
+        }
+        
+        // Checkout redirect (placeholder - replace with actual Stripe session)
+        function openCheckout(plan) {
+            const urls = {
+                monthly: 'https://checkout.stripe.com/pay/cs_test_monthly',
+                quarterly: 'https://checkout.stripe.com/pay/cs_test_quarterly',
+                lifetime: 'https://checkout.stripe.com/pay/cs_test_lifetime'
+            };
+            
+            // For demo - replace with actual Stripe Checkout Session URL
+            alert(`Redirecting to Stripe Checkout for ${plan} plan...\n\nIn production, this would open:\n${urls[plan]}`);
+            
+            // window.location.href = urls[plan];
+        }
+        
+        // Intersection Observer for scroll animations
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px 0px -50px 0px',
+            threshold: 0.1
+        };
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animationPlayState = 'running';
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+        
+        document.querySelectorAll('.animate-fade-up').forEach(el => {
+            el.style.animationPlayState = 'paused';
+            observer.observe(el);
+        });
+        
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+        
+        // Parallax for glow orbs (reduced motion safe)
+        if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            document.addEventListener('mousemove', (e) => {
+                const x = e.clientX / window.innerWidth - 0.5;
+                const y = e.clientY / window.innerHeight - 0.5;
+                document.querySelectorAll('.glow-orb').forEach((orb, i) => {
+                    const factor = (i + 1) * 15;
+                    orb.style.transform = `translate(${x * factor}px, ${y * factor}px)`;
+                });
+            });
+        }
+    </script>
+</body>
+</html>
