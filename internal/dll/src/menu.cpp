@@ -48,6 +48,8 @@ static void DrawRageTab() {
     ImGui::SliderInt("Min Damage", &g_RageConfig.minDamage, 1, 200);
     ImGui::SliderFloat("Multipoint Scale", &g_RageConfig.multipointScale, 0.f, 1.f, "%.2f");
     ImGui::Combo("Hitbox Priority", &g_RageConfig.hitboxPriority, "Head\0Neck\0Chest\0Pelvis\0Auto\0");
+    ImGui::Checkbox("Jump Shot", &g_RageConfig.jumpShot);
+    ImGui::SameLine();
     ImGui::Checkbox("Deathmatch Mode", &g_RageConfig.deathmatchMode);
 }
 
@@ -190,8 +192,50 @@ static void DrawMiscTab() {
     ImGui::Columns(1);
 }
 
+static void LoadRagePreset() {
+    g_RageConfig = {};
+    g_RageConfig.enabled = true;
+    g_RageConfig.autoShoot = true;
+    g_RageConfig.autoScope = true;
+    g_RageConfig.silent = true;
+    g_RageConfig.fov = 180.f;
+    g_RageConfig.hitchance = 70.f;
+    g_RageConfig.minDamage = 30;
+    g_RageConfig.hitboxPriority = 4;
+    g_RageConfig.multipoint = true;
+    g_RageConfig.multipointScale = 1.0f;
+    g_RageConfig.visibleOnly = false;
+    g_RageConfig.deathmatchMode = true;
+    g_RageConfig.jumpShot = true;
+
+    g_AAConfig = {};
+    g_AAConfig.enabled = true;
+    g_AAConfig.pitch = 1;
+    g_AAConfig.yaw = 4;
+    g_AAConfig.spinSpeed = 30.f;
+    g_AAConfig.fakelag = true;
+    g_AAConfig.fakelagLimit = 14;
+    g_AAConfig.atTarget = true;
+    g_AAConfig.yawOffset = 0;
+
+    g_VisualsConfig.box = true;
+    g_VisualsConfig.healthBar = true;
+    g_VisualsConfig.name = true;
+    g_VisualsConfig.weapon = true;
+    g_VisualsConfig.snaplines = true;
+    g_VisualsConfig.thirdperson = true;
+    g_VisualsConfig.thirdpersonDist = 100.f;
+
+    g_MovementConfig.bunnyHop = true;
+    g_MovementConfig.autoStrafe = true;
+}
+
 static void DrawConfigTab() {
     ImGui::Text("Config Manager");
+    ImGui::Separator();
+    if (ImGui::Button("Load Rage Preset (HVH)")) {
+        LoadRagePreset();
+    }
     ImGui::Separator();
     ImGui::InputText("Config Name", configNameBuf, sizeof(configNameBuf));
     ImGui::SameLine();

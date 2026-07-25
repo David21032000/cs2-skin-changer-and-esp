@@ -16,6 +16,7 @@ struct RageAimbotConfig {
     float multipointScale = 0.5f;
     bool visibleOnly = true;
     bool deathmatchMode = false;
+    bool jumpShot = false;
     int selectedWeapon = 0;
 };
 

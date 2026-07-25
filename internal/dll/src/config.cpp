@@ -34,6 +34,7 @@ static json SerializeRage() {
     j["multipointScale"] = c.multipointScale;
     j["visibleOnly"] = c.visibleOnly;
     j["deathmatchMode"] = c.deathmatchMode;
+    j["jumpShot"] = c.jumpShot;
     j["selectedWeapon"] = c.selectedWeapon;
     return j;
 }
@@ -181,6 +182,7 @@ static void DeserializeRage(const json& j) {
     if (j.contains("multipointScale")) c.multipointScale = j["multipointScale"];
     if (j.contains("visibleOnly")) c.visibleOnly = j["visibleOnly"];
     if (j.contains("deathmatchMode")) c.deathmatchMode = j["deathmatchMode"];
+    if (j.contains("jumpShot")) c.jumpShot = j["jumpShot"];
     if (j.contains("selectedWeapon")) c.selectedWeapon = j["selectedWeapon"];
 }
 

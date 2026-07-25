@@ -5,6 +5,9 @@
 #include <cstdlib>
 #include <limits>
 
+#define IN_ATTACK2       (1 << 11)
+#define IN_JUMP          (1 << 1)
+
 static uintptr_t GetLocalPlayer() {
     return Mem::Read<uintptr_t>(Offsets::dwLocalPlayerPawn);
 }
@@ -251,6 +254,22 @@ void Aimbot::Run(CUserCmd* cmd) {
     Vec3 targetAngles = CalcAngle(localEye, aimPos);
     float hitchance = Hitchance(target, aimPos, targetAngles, &wpn, cmd);
     if (hitchance < g_RageConfig.hitchance) return;
+
+    // Auto scope for sniper rifles
+    if (g_RageConfig.autoScope && wpn.type == WEAPONTYPE_SNIPER_RIFLE) {
+        bool scoped = Mem::Read<bool>(local + Offsets::NetVar::m_bIsScoped);
+        if (!scoped) {
+            cmd->buttons |= IN_ATTACK2;
+            return;
+        }
+    }
+
+    // Jump shot
+    if (g_RageConfig.jumpShot) {
+        int flags = Mem::Read<int>(local + Offsets::NetVar::m_fFlags);
+        if (flags & 1) cmd->buttons |= IN_JUMP;
+    }
+
     Vec3 current = cmd->viewangles;
     Vec3 delta = targetAngles - current;
     delta.Clamp();
