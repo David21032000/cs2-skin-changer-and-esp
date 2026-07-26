@@ -332,7 +332,7 @@ namespace Interfaces {
         }
     }
 
-    inline void InitializeAll() {
+    inline bool InitializeAll() {
         // Standard interface creation via CreateInterface
         client = reinterpret_cast<IBaseClientDLL*>(
             GrabInterface("client.dll", "Source2Client002"));
@@ -357,5 +357,11 @@ namespace Interfaces {
 
         // IInputSystem from dedicated offset
         GrabInputSystem();
+
+        // Validate critical interfaces
+        if (!client || !engine || !entityList || !modelInfo) {
+            return false;
+        }
+        return true;
     }
 } // namespace Interfaces

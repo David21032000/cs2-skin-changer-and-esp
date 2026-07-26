@@ -6,4 +6,6 @@ extern char g_dllDir[];
 namespace Hooks {
     bool initialize();
     void shutdown();
+    void GameLoop();
+    bool InitGameHooks();
 }

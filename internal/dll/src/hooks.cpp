@@ -31,9 +31,11 @@ namespace {
 char g_dllDir[MAX_PATH] = {0};
 
 static void Log(const char* msg) {
-    if (!g_dllDir[0]) return;
     char path[MAX_PATH];
-    sprintf_s(path, "%s\\camus_debug.txt", g_dllDir);
+    GetModuleFileNameA(GetModuleHandleA(nullptr), path, MAX_PATH);
+    char* lastSlash = strrchr(path, '\\');
+    if (lastSlash) *lastSlash = '\0';
+    strcat_s(path, "\\camus_debug.txt");
     HANDLE hFile = CreateFileA(path, GENERIC_WRITE,
         FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     if (hFile != INVALID_HANDLE_VALUE) {
@@ -45,6 +47,10 @@ static void Log(const char* msg) {
     }
 }
 
+HRESULT __stdcall Present_hook(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags);
+HRESULT __stdcall ResizeBuffers_hook(IDXGISwapChain* pSwapChain, UINT BufferCount,
+    UINT Width, UINT Height, DXGI_FORMAT NewFormat, UINT SwapChainFlags);
+
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     if (g_imguiInit && ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
         return true;
@@ -55,34 +61,66 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     return CallWindowProcA(g_originalWndProc, hWnd, msg, wParam, lParam);
 }
 
-static void InitCheat() {
-    Log("ch init: console...");
-    AllocConsole();
-    freopen_s((FILE**)stdin, "CONIN$", "r", stdin);
-    freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
-    printf("CAMUS CS2 - init started\n");
+static bool HookD3D11ViaTempSwapchain() {
+    Log("hook: creating temp swapchain for vtable hook...");
 
-    Log("ch init: InitEverything...");
-    InitEverything();
-    Log("ch init: InitEverything done");
+    DXGI_SWAP_CHAIN_DESC scd = {};
+    scd.BufferCount = 1;
+    scd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    scd.BufferDesc.Width = 1;
+    scd.BufferDesc.Height = 1;
+    scd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    scd.OutputWindow = GetDesktopWindow();
+    scd.SampleDesc.Count = 1;
+    scd.Windowed = TRUE;
 
-    Log("ch init: InitGameHooks...");
-    Hooks::InitGameHooks();
-    Log("ch init: InitGameHooks done");
+    IDXGISwapChain* tempSwapChain = nullptr;
+    ID3D11Device* tempDevice = nullptr;
+    ID3D11DeviceContext* tempContext = nullptr;
+
+    HRESULT hr = D3D11CreateDeviceAndSwapChain(
+        nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, 0,
+        nullptr, 0, D3D11_SDK_VERSION, &scd,
+        &tempSwapChain, &tempDevice, nullptr, &tempContext
+    );
+    if (FAILED(hr) || !tempSwapChain || !tempDevice) {
+        Log("hook: D3D11 temp device creation FAILED");
+        return false;
+    }
+    Log("hook: D3D11 temp device OK");
+
+    void** vtable = *reinterpret_cast<void***>(tempSwapChain);
+    g_vtableHooked = vtable;
+
+    DWORD oldProtect;
+    VirtualProtect(&vtable[8], sizeof(void*), PAGE_READWRITE, &oldProtect);
+    originalPresent = reinterpret_cast<Present_t>(vtable[8]);
+    vtable[8] = reinterpret_cast<void*>(Present_hook);
+    VirtualProtect(&vtable[8], sizeof(void*), oldProtect, &oldProtect);
+
+    VirtualProtect(&vtable[13], sizeof(void*), PAGE_READWRITE, &oldProtect);
+    originalResizeBuffers = reinterpret_cast<ResizeBuffers_t>(vtable[13]);
+    vtable[13] = reinterpret_cast<void*>(ResizeBuffers_hook);
+    VirtualProtect(&vtable[13], sizeof(void*), oldProtect, &oldProtect);
+
+    tempSwapChain->Release();
+    tempDevice->Release();
+    tempContext->Release();
+    Log("hook: vtable hooked via temp swapchain");
+    return true;
 }
 
 HRESULT __stdcall Present_hook(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags) {
     if (!g_cheatInit) {
         g_cheatInit = true;
         Log("hook: first Present, initializing cheat...");
-        InitCheat();
 
         if (SUCCEEDED(pSwapChain->GetDevice(__uuidof(ID3D11Device), (void**)&g_pDevice))) {
             g_pDevice->GetImmediateContext(&g_pContext);
             DXGI_SWAP_CHAIN_DESC desc;
             if (SUCCEEDED(pSwapChain->GetDesc(&desc))) {
                 g_hWindow = desc.OutputWindow;
-                g_originalWndProc = (WNDPROC)SetWindowLongPtrA(g_hWindow, GWLP_WNDPROC, (LONG_PTR)WndProc);
+                g_originalWndProc = reinterpret_cast<WNDPROC>(SetWindowLongPtrA(g_hWindow, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(WndProc)));
 
                 ImGui::CreateContext();
                 ImGuiIO& io = ImGui::GetIO();
@@ -96,6 +134,12 @@ HRESULT __stdcall Present_hook(IDXGISwapChain* pSwapChain, UINT SyncInterval, UI
                 }
             }
         }
+
+        Log("hook: InitEverything...");
+        Init::InitEverything();
+        Log("hook: InitEverything done");
+
+        Hooks::InitGameHooks();
         Log("hook: full init done");
     }
 
@@ -130,54 +174,8 @@ HRESULT __stdcall ResizeBuffers_hook(IDXGISwapChain* pSwapChain, UINT BufferCoun
 }
 
 bool Hooks::initialize() {
-    Log("init: creating temp D3D11 device for vtable hook");
-    Log("init: creating temp D3D11 device for vtable hook");
-    DXGI_SWAP_CHAIN_DESC scd = {};
-    scd.BufferCount = 1;
-    scd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    scd.BufferDesc.Width = 1;
-    scd.BufferDesc.Height = 1;
-    scd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    scd.OutputWindow = GetDesktopWindow();
-    scd.SampleDesc.Count = 1;
-    scd.Windowed = TRUE;
-
-    IDXGISwapChain* tempSwapChain = nullptr;
-    ID3D11Device* tempDevice = nullptr;
-    ID3D11DeviceContext* tempContext = nullptr;
-
-    HRESULT hr = D3D11CreateDeviceAndSwapChain(
-        nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, 0,
-        nullptr, 0, D3D11_SDK_VERSION, &scd,
-        &tempSwapChain, &tempDevice, nullptr, &tempContext
-    );
-    if (FAILED(hr) || !tempSwapChain || !tempDevice) {
-        Log("init: D3D11 device creation FAILED");
-        return false;
-    }
-    Log("init: D3D11 OK");
-
-    void** vtable = *(void***)tempSwapChain;
-    g_vtableHooked = vtable;
-
-    DWORD oldProtect;
-    VirtualProtect(&vtable[8], sizeof(void*), PAGE_READWRITE, &oldProtect);
-    originalPresent = (Present_t)vtable[8];
-    vtable[8] = (void*)&Present_hook;
-    VirtualProtect(&vtable[8], sizeof(void*), oldProtect, &oldProtect);
-
-    VirtualProtect(&vtable[13], sizeof(void*), PAGE_READWRITE, &oldProtect);
-    originalResizeBuffers = (ResizeBuffers_t)vtable[13];
-    vtable[13] = (void*)&ResizeBuffers_hook;
-    VirtualProtect(&vtable[13], sizeof(void*), oldProtect, &oldProtect);
-
-    Log("init: vtable hooked via temp swapchain");
-
-    tempSwapChain->Release();
-    tempDevice->Release();
-    tempContext->Release();
-    Log("init: done");
-    return true;
+    Log("init: starting temp swapchain hook...");
+    return HookD3D11ViaTempSwapchain();
 }
 
 void Hooks::shutdown() {
@@ -185,12 +183,12 @@ void Hooks::shutdown() {
         DWORD oldProtect;
         if (originalPresent) {
             VirtualProtect(&g_vtableHooked[8], sizeof(void*), PAGE_READWRITE, &oldProtect);
-            g_vtableHooked[8] = (void*)originalPresent;
+            g_vtableHooked[8] = reinterpret_cast<void*>(originalPresent);
             VirtualProtect(&g_vtableHooked[8], sizeof(void*), oldProtect, &oldProtect);
         }
         if (originalResizeBuffers) {
             VirtualProtect(&g_vtableHooked[13], sizeof(void*), PAGE_READWRITE, &oldProtect);
-            g_vtableHooked[13] = (void*)originalResizeBuffers;
+            g_vtableHooked[13] = reinterpret_cast<void*>(originalResizeBuffers);
             VirtualProtect(&g_vtableHooked[13], sizeof(void*), oldProtect, &oldProtect);
         }
         g_vtableHooked = nullptr;
@@ -198,7 +196,7 @@ void Hooks::shutdown() {
 
     if (g_imguiInit) {
         if (g_originalWndProc && g_hWindow)
-            SetWindowLongPtrA(g_hWindow, GWLP_WNDPROC, (LONG_PTR)g_originalWndProc);
+            SetWindowLongPtrA(g_hWindow, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(g_originalWndProc));
         ImGui_ImplDX11_Shutdown();
         ImGui_ImplWin32_Shutdown();
         ImGui::DestroyContext();
