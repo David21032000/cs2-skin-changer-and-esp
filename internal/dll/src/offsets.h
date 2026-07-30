@@ -32,6 +32,11 @@ namespace Offsets {
         inline constexpr int m_iShotsFired = 0x160C;
         inline constexpr int m_aimPunchAngle = 0x15A0;
         inline constexpr int m_aimPunchAngleVel = 0x15AC;
+        inline constexpr int m_weaponData = 0x120;
+        inline constexpr int m_BoneArray = 0x1F8;
+        inline constexpr int m_bDormant = 0xE8;
+        inline constexpr int m_lifeState = 0x348;
+        inline constexpr int m_iItemDefinitionIndex = 0x1BA;
     }
 
     namespace VIndex {

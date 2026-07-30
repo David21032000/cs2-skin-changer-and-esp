@@ -30,14 +30,9 @@ namespace {
 
 char g_dllDir[MAX_PATH] = {0};
 
-static void Log(const char* msg) {
-    char path[MAX_PATH];
-    GetModuleFileNameA(GetModuleHandleA(nullptr), path, MAX_PATH);
-    char* lastSlash = strrchr(path, '\\');
-    if (lastSlash) *lastSlash = '\0';
-    strcat_s(path, "\\camus_debug.txt");
+static void LogToFile(const char* path, const char* msg) {
     HANDLE hFile = CreateFileA(path, GENERIC_WRITE,
-        FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+        FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     if (hFile != INVALID_HANDLE_VALUE) {
         SetFilePointer(hFile, 0, NULL, FILE_END);
         DWORD written;
@@ -45,6 +40,22 @@ static void Log(const char* msg) {
         WriteFile(hFile, "\r\n", 2, &written, NULL);
         CloseHandle(hFile);
     }
+}
+
+static void Log(const char* msg) {
+    OutputDebugStringA(msg);
+    OutputDebugStringA("\n");
+    if (g_dllDir[0]) {
+        char path[MAX_PATH];
+        snprintf(path, MAX_PATH, "%s\\camus_debug.txt", g_dllDir);
+        LogToFile(path, msg);
+    }
+    char path2[MAX_PATH];
+    GetModuleFileNameA(GetModuleHandleA(nullptr), path2, MAX_PATH);
+    char* lastSlash = strrchr(path2, '\\');
+    if (lastSlash) *lastSlash = '\0';
+    strcat_s(path2, "\\camus_debug.txt");
+    LogToFile(path2, msg);
 }
 
 HRESULT __stdcall Present_hook(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags);
@@ -64,15 +75,34 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 static bool HookD3D11ViaTempSwapchain() {
     Log("hook: creating temp swapchain for vtable hook...");
 
+    WNDCLASSEXA wc = {};
+    wc.cbSize = sizeof(wc);
+    wc.lpfnWndProc = DefWindowProcA;
+    wc.hInstance = GetModuleHandleA(nullptr);
+    wc.lpszClassName = "camus_hook";
+    RegisterClassExA(&wc);
+    HWND hHiddenWnd = CreateWindowExA(0, "camus_hook", "", WS_POPUP,
+        0, 0, 2, 2, nullptr, nullptr, wc.hInstance, nullptr);
+    if (!hHiddenWnd) {
+        Log("hook: failed to create hidden window");
+        return false;
+    }
+    Log("hook: hidden window created");
+
     DXGI_SWAP_CHAIN_DESC scd = {};
-    scd.BufferCount = 1;
+    scd.BufferCount = 2;
     scd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    scd.BufferDesc.Width = 1;
-    scd.BufferDesc.Height = 1;
+    scd.BufferDesc.Width = 2;
+    scd.BufferDesc.Height = 2;
     scd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    scd.OutputWindow = GetDesktopWindow();
+    scd.OutputWindow = hHiddenWnd;
     scd.SampleDesc.Count = 1;
     scd.Windowed = TRUE;
+    scd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+
+    char buf[128];
+    snprintf(buf, sizeof(buf), "hook: BufferCount=2, SwapEffect=FLIP_DISCARD, HWND=%p", hHiddenWnd);
+    Log(buf);
 
     IDXGISwapChain* tempSwapChain = nullptr;
     ID3D11Device* tempDevice = nullptr;
@@ -106,6 +136,8 @@ static bool HookD3D11ViaTempSwapchain() {
     tempSwapChain->Release();
     tempDevice->Release();
     tempContext->Release();
+    DestroyWindow(hHiddenWnd);
+    UnregisterClassA("camus_hook", wc.hInstance);
     Log("hook: vtable hooked via temp swapchain");
     return true;
 }

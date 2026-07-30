@@ -13,6 +13,10 @@
 #include <cstdint>
 #include <cmath>
 
+struct CInput {
+    void** vtable;
+};
+
 static void Log(const char* msg) {
     FILE* f = fopen("camus_debug.txt", "a");
     if (f) { fprintf(f, "%s\n", msg); fclose(f); }
